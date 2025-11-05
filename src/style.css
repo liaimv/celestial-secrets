@@ -1,0 +1,48 @@
+/* A-Frame VR Scene Styles */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+body {
+  background-color: #000000;
+}
+
+/* A-Frame Scene Container */
+a-scene {
+  width: 100%;
+  height: 100vh;
+  display: block;
+}
+
+/* Cursor styling */
+a-cursor {
+  cursor: pointer;
+}
+
+/* Loading screen styles (optional) */
+#loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  color: #ffffff;
+  font-size: 24px;
+}
+
