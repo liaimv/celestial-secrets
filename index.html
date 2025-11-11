@@ -11,25 +11,61 @@
   <a-scene>
     <!-- Room Environment -->
     <!-- Floor -->
-    <a-plane position="0 0 -10" rotation="-90 0 0" width="20" height="20" color="#8B7355" material="roughness: 0.8; metalness: 0.1"></a-plane>
+    <a-plane position="0 0 -13.455" rotation="-90 0 0" width="20" height="20" color="#8B7355" material="roughness: 0.8; metalness: 0.1" scale="0.654 0.654 0.654"></a-plane>
     
     <!-- Ceiling -->
-    <a-plane position="0 5 -10" rotation="90 0 0" width="20" height="20" color="#D3D3D3" material="roughness: 0.9"></a-plane>
+    <a-plane position="0 5 -13.455" rotation="90 0 0" width="20" height="20" color="#D3D3D3" material="roughness: 0.9" scale="0.654 0.654 0.654"></a-plane>
     
     <!-- Back Wall (where table will be) -->
-    <a-plane position="0 2.5 -20" rotation="0 0 0" width="20" height="5" color="#000000" material="roughness: 0.7"></a-plane>
+    <a-plane position="0 2.5 -19.991" rotation="0 0 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
+    
+    <!-- Front Wall -->
+    <a-plane position="0 2.5 -6.915" rotation="0 180 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
     
     <!-- Left Wall -->
-    <a-plane position="-10 2.5 -10" rotation="0 90 0" width="20" height="5" color="#000000" material="roughness: 0.7"></a-plane>
+    <a-plane position="-6.54 2.5 -13.455" rotation="0 90 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
     
     <!-- Right Wall -->
-    <a-plane position="10 2.5 -10" rotation="0 -90 0" width="20" height="5" color="#000000" material="roughness: 0.7"></a-plane>
+    <a-plane position="6.54 2.5 -13.455" rotation="0 -90 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
+    
+    <!-- Big Dipper Constellation Blackboard on Right Wall -->
+    <a-entity id="centaurus-board" position="6.53 2.5 -13.455" rotation="0 -90 0">
+      <!-- Blackboard -->
+      <a-plane position="0 0 0" width="4.5" height="3.5" color="#000000" material="roughness: 0.8; side: double"></a-plane>
+      
+      <!-- Big Dipper Constellation Stars -->
+      <!-- Bowl of the Dipper (4 stars) -->
+      <!-- Dubhe (Alpha Ursae Majoris) - top right of bowl, brightest -->
+      <a-sphere class="constellation-star" data-star="dubhe" position="0.8 0.8 0.01" radius="0.04" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="1.0"></a-sphere>
+      
+      <!-- Merak (Beta Ursae Majoris) - bottom right of bowl -->
+      <a-sphere class="constellation-star" data-star="merak" position="0.6 0.2 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
+      
+      <!-- Phecda (Gamma Ursae Majoris) - bottom left of bowl -->
+      <a-sphere class="constellation-star" data-star="phecda" position="-0.2 0.1 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
+      
+      <!-- Megrez (Delta Ursae Majoris) - top left of bowl -->
+      <a-sphere class="constellation-star" data-star="megrez" position="0.0 0.7 0.01" radius="0.03" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.8"></a-sphere>
+      
+      <!-- Handle of the Dipper (3 stars) -->
+      <!-- Alioth (Epsilon Ursae Majoris) - first in handle -->
+      <a-sphere class="constellation-star" data-star="alioth" position="-0.4 0.5 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
+      
+      <!-- Mizar (Zeta Ursae Majoris) - middle of handle -->
+      <a-sphere class="constellation-star" data-star="mizar" position="-0.8 0.3 0.01" radius="0.03" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.8"></a-sphere>
+      
+      <!-- Alkaid (Eta Ursae Majoris) - end of handle -->
+      <a-sphere class="constellation-star" data-star="alkaid" position="-1.2 0.1 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
+      
+      <!-- Container for dynamically created connection lines -->
+      <a-entity id="constellation-lines"></a-entity>
+    </a-entity>
     
     <!-- Sky (for outside view) -->
     <a-sky color="#87CEEB"></a-sky>
     
     <!-- Camera (inside room, looking at table) -->
-    <a-camera position="0 1.6 -5" rotation="0 0 0">
+    <a-camera position="0 1.6 -13.455" rotation="0 0 0">
       <!-- Proximity UI as A-Frame entity (bottom right of screen) -->
       <a-entity id="proximity-ui-entity" class="proximity-ui-entity" visible="false">
         <!-- E text in white -->
@@ -53,14 +89,27 @@
       </a-entity>
       <!-- ESC UI as A-Frame entity (top left of screen) -->
       <a-entity id="esc-ui-entity" class="esc-ui-entity" visible="false">
-        <!-- CTRL Go Back text in white -->
+        <!-- Q Go Back text in white -->
         <a-text 
           position="-0.48 0.38 -0.48" 
-          value="CTRL Go Back" 
+          value="Q Go Back" 
           align="left" 
           color="#ffffff" 
           width="0.4"
           font="roboto">
+        </a-text>
+      </a-entity>
+      <!-- Completion Message UI as A-Frame entity (center of screen) -->
+      <a-entity id="completion-message-entity" class="completion-message-entity" visible="false">
+        <a-text 
+          id="completion-text"
+          position="0 0 -0.5" 
+          value="" 
+          align="center" 
+          color="#ffffff" 
+          width="2"
+          font="roboto"
+          anchor="center">
         </a-text>
       </a-entity>
     </a-camera>
@@ -147,6 +196,37 @@
       </a-entity>
     </a-entity>
     
+    <!-- Table on other side of solar system wall (same size) - along front wall -->
+    <a-entity id="table-2" position="0.1 0.75 -4.915">
+      <!-- Table Top (wider table) -->
+      <a-box position="0 0.25 -3.5" width="16" height="0.1" depth="6" color="#8B4513" material="roughness: 0.6; metalness: 0.2" scale="0.27 1 0.5"></a-box>
+      <!-- Table Legs (at four corners) -->
+      <!-- Front Left (leg edge matches table corner) -->
+      <a-box position="-2.06 -0.3 -4.9" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <!-- Front Right (leg edge matches table corner) -->
+      <a-box position="2.06 -0.3 -4.9" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <!-- Back Left (leg edge matches table corner) -->
+      <a-box position="-2.06 -0.3 -2.1" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <!-- Back Right (leg edge matches table corner) -->
+      <a-box position="2.06 -0.3 -2.1" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      
+      <!-- Four Zodiac Images - horizontally in the middle towards the back -->
+      <a-plane position="-1.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Pisces.jpg" material="side: double"></a-plane>
+      <a-plane position="-0.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Sagittarius.jpg" material="side: double"></a-plane>
+      <a-plane position="0.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Cancer.jpg" material="side: double"></a-plane>
+      <a-plane position="1.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Libra.jpg" material="side: double"></a-plane>
+      
+      <!-- Four Spheres in front of the images -->
+      <!-- Blue sphere for Pisces -->
+      <a-sphere data-sphere="sphere-1" data-zodiac="pisces" class="draggable-sphere" position="-0.6 0.4 -4.3" radius="0.1" color="#0000FF"></a-sphere>
+      <!-- Red sphere for Cancer -->
+      <a-sphere data-sphere="sphere-2" data-zodiac="cancer" class="draggable-sphere" position="-0.2 0.4 -4.3" radius="0.1" color="#FF0000"></a-sphere>
+      <!-- Yellow sphere for Libra -->
+      <a-sphere data-sphere="sphere-3" data-zodiac="libra" class="draggable-sphere" position="0.2 0.4 -4.3" radius="0.1" color="#FFFF00"></a-sphere>
+      <!-- White sphere for Sagittarius -->
+      <a-sphere data-sphere="sphere-4" data-zodiac="sagittarius" class="draggable-sphere" position="0.6 0.4 -4.3" radius="0.1" color="#FFFFFF"></a-sphere>
+    </a-entity>
+    
   </a-scene>
   
   <!-- Proximity UI -->
@@ -161,7 +241,7 @@
   
   <!-- ESC UI -->
   <div id="esc-ui" class="esc-ui hidden">
-    <span class="esc-text">CTRL Go Back</span>
+    <span class="esc-text">Q Go Back</span>
   </div>
   
   <script type="module" src="/src/main.js"></script>
