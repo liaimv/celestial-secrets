@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Celestial Secrets - A-Frame VR</title>
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
@@ -222,8 +223,8 @@
       <!-- Four Spheres in front of the images -->
       <!-- Blue sphere for Pisces -->
       <a-sphere data-sphere="sphere-1" data-zodiac="pisces" class="draggable-sphere" position="-0.6 0.4 -4.3" radius="0.1" color="#0000FF"></a-sphere>
-      <!-- Red sphere for Cancer -->
-      <a-sphere data-sphere="sphere-2" data-zodiac="cancer" class="draggable-sphere" position="-0.2 0.4 -4.3" radius="0.1" color="#FF0000"></a-sphere>
+      <!-- Cancer model for Cancer -->
+      <a-entity data-sphere="sphere-2" data-zodiac="cancer" class="draggable-sphere" position="-0.2 0.4 -4.3" rotation="90 0 0" obj-model="obj: url(data/zodiac/zodiac symbols/Cancer.obj)" material="color: #FFD700; metalness: 0.8; roughness: 0.2" scale="0.1 0.1 0.1"></a-entity>
       <!-- Yellow sphere for Libra -->
       <a-sphere data-sphere="sphere-3" data-zodiac="libra" class="draggable-sphere" position="0.2 0.4 -4.3" radius="0.1" color="#FFFF00"></a-sphere>
       <!-- White sphere for Sagittarius -->
