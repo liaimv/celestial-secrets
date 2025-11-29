@@ -1454,6 +1454,9 @@ function initSolarSystem() {
           img.src = imagePath;
         }
         
+        // Check if the Greek letter matches the expected one for this constellation
+        checkGreekLetterMatch(idx);
+        
         event.preventDefault();
         return;
       }
@@ -2260,13 +2263,61 @@ function initSolarSystem() {
   // Store current letter index for each input control
   const greekInputIndices = {};
   
+  // Store expected Greek letter for each constellation image (by index)
+  const expectedGreekLetters = {};
+  
   // Track currently hovered arrow for hover effects
   let hoveredArrow = null;
   
+  // Check if Greek alphabet matches expected letter for a given index
+  function checkGreekLetterMatch(index) {
+    const currentLetterIndex = greekInputIndices[index];
+    const currentLetter = greekAlphabet[currentLetterIndex];
+    const expectedLetter = expectedGreekLetters[index];
+    
+    if (expectedLetter && currentLetter === expectedLetter) {
+      console.log(`✓ Match! Constellation ${index + 1}: Greek alphabet "${currentLetter}" matches expected "${expectedLetter}"`);
+      
+      // Check if all match
+      checkAllGreekLettersMatch();
+      return true;
+    } else if (expectedLetter) {
+      console.log(`✗ No match. Constellation ${index + 1}: Current "${currentLetter}" does not match expected "${expectedLetter}"`);
+      return false;
+    }
+    return false;
+  }
+  
+  // Check if all Greek letters match their expected values
+  function checkAllGreekLettersMatch() {
+    const totalControls = Object.keys(expectedGreekLetters).length;
+    if (totalControls === 0) return;
+    
+    let matchCount = 0;
+    for (let i = 0; i < totalControls; i++) {
+      const currentLetterIndex = greekInputIndices[i];
+      const currentLetter = greekAlphabet[currentLetterIndex];
+      const expectedLetter = expectedGreekLetters[i];
+      
+      if (currentLetter === expectedLetter) {
+        matchCount++;
+      }
+    }
+    
+    if (matchCount === totalControls) {
+      console.log('🎉 ALL GREEK ALPHABETS MATCH! All constellation images have their corresponding Greek letters!');
+    }
+  }
+  
   // Create Greek alphabet input control below a constellation image
-  function createGreekInputControl(index, imagePosition, imageHeight, bgRotation, bgScale) {
+  function createGreekInputControl(index, imagePosition, imageHeight, bgRotation, bgScale, expectedStarName) {
     const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
     if (!THREE) return;
+    
+    // Store expected Greek letter for this constellation image
+    if (expectedStarName) {
+      expectedGreekLetters[index] = expectedStarName;
+    }
     
     // Initialize index for this control (start at alpha = 0)
     greekInputIndices[index] = 0;
@@ -2322,6 +2373,9 @@ function initSolarSystem() {
       letterImage.setAttribute('width', baseWidth);
       letterImage.setAttribute('height', imageHeight);
       letterImage.setAttribute('src', getGreekLetterImagePath(greekAlphabet[0])); // Start with alpha
+      
+      // Check initial match (will be false since we start at alpha, but good for consistency)
+      setTimeout(() => checkGreekLetterMatch(index), 100);
     };
     img.onerror = function() {
       console.warn(`Failed to load Greek letter image: ${getGreekLetterImagePath(greekAlphabet[0])}`);
@@ -2431,7 +2485,7 @@ function initSolarSystem() {
         container.appendChild(image);
         
         // Create Greek alphabet input control below this image
-        const inputControl = createGreekInputControl(index, imagePosition, imageHeight, bgRotation, bgScale);
+        const inputControl = createGreekInputControl(index, imagePosition, imageHeight, bgRotation, bgScale, constellation.star);
         if (inputControl) {
           container.appendChild(inputControl);
         }
