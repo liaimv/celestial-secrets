@@ -788,6 +788,12 @@ function initSolarSystem() {
     window.isStarBackgroundView = false;
     window.starBackgroundViewRotation = null;
     
+    // Reset hovered arrow when leaving star background view
+    if (hoveredArrow) {
+      hoveredArrow.setAttribute('color', '#000000');
+      hoveredArrow = null;
+    }
+    
     console.log('Restoring camera position:', originalCameraPosition);
     console.log('Restoring camera rotation:', originalCameraRotation);
     
@@ -1351,8 +1357,108 @@ function initSolarSystem() {
     return intersectionPoint;
   }
   
-  // Handle mouse down - start dragging
+  // Handle mouse down - start dragging or handle Greek input controls
   function handleMouseDown(event) {
+    // Check for Greek input controls first (only in star background view)
+    if (isStarBackgroundView || window.isStarBackgroundView) {
+      // Only handle left mouse button
+      if (event.button !== 0) return;
+      
+      const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
+      if (!THREE) return;
+      
+      const cameraEl = scene.querySelector('a-camera');
+      if (!cameraEl || !cameraEl.object3D) return;
+      
+      const camera = cameraEl.getObject3D('camera');
+      if (!camera) return;
+      
+      // Get renderer from scene
+      const renderer = scene.renderer || (scene.systems && scene.systems.renderer && scene.systems.renderer.renderer);
+      if (!renderer || !renderer.domElement) return;
+      
+      // Initialize mouse if needed
+      if (!mouse) {
+        mouse = new THREE.Vector2();
+      }
+      
+      // Normalize mouse coordinates
+      const rect = renderer.domElement.getBoundingClientRect();
+      mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      
+      // Create raycaster
+      if (!raycaster) {
+        raycaster = new THREE.Raycaster();
+      }
+      raycaster.setFromCamera(mouse, camera);
+      
+      // Check for intersection with Greek input arrows
+      const arrows = document.querySelectorAll('.greek-arrow-up, .greek-arrow-down');
+      const arrowIntersects = [];
+      
+      arrows.forEach(arrow => {
+        if (arrow.object3D) {
+          const intersect = raycaster.intersectObject(arrow.object3D, true);
+          if (intersect.length > 0) {
+            arrowIntersects.push({ element: arrow, distance: intersect[0].distance });
+          }
+        }
+      });
+      
+      if (arrowIntersects.length > 0) {
+        // Find closest arrow
+        arrowIntersects.sort((a, b) => a.distance - b.distance);
+        const clickedArrow = arrowIntersects[0].element;
+        const idx = parseInt(clickedArrow.getAttribute('data-index'));
+        
+        // Find the control container (parent element with class 'greek-input-control')
+        let controlContainer = clickedArrow.parentElement;
+        while (controlContainer && !controlContainer.classList.contains('greek-input-control')) {
+          controlContainer = controlContainer.parentElement;
+        }
+        
+        if (!controlContainer) {
+          console.warn('Could not find Greek input control container');
+          return;
+        }
+        
+        if (clickedArrow.classList.contains('greek-arrow-up')) {
+          // Up arrow clicked - increment
+          greekInputIndices[idx] = (greekInputIndices[idx] + 1) % greekAlphabet.length;
+        } else if (clickedArrow.classList.contains('greek-arrow-down')) {
+          // Down arrow clicked - decrement
+          greekInputIndices[idx] = (greekInputIndices[idx] - 1 + greekAlphabet.length) % greekAlphabet.length;
+        }
+        
+        // Update the displayed letter image
+        const letterImageEl = controlContainer.querySelector('.greek-letter-image');
+        if (letterImageEl) {
+          const letterName = greekAlphabet[greekInputIndices[idx]];
+          const imagePath = getGreekLetterImagePath(letterName);
+          
+          // Load image to maintain aspect ratio
+          const img = new Image();
+          img.onload = function() {
+            const aspectRatio = img.width / img.height;
+            const baseWidth = 0.12; // Base width relative to the white box
+            const imageHeight = baseWidth / aspectRatio;
+            
+            letterImageEl.setAttribute('width', baseWidth);
+            letterImageEl.setAttribute('height', imageHeight);
+            letterImageEl.setAttribute('src', imagePath);
+          };
+          img.onerror = function() {
+            console.warn(`Failed to load Greek letter image: ${imagePath}`);
+          };
+          img.src = imagePath;
+        }
+        
+        event.preventDefault();
+        return;
+      }
+    }
+    
     // Only allow dragging in top-down view
     if (!isTopDownView) return;
     
@@ -1472,8 +1578,68 @@ function initSolarSystem() {
     }
   }
   
-  // Handle mouse move - update planet or sphere position
+  // Handle mouse move - update planet or sphere position or handle arrow hover
   function handleMouseMove(event) {
+    // Handle arrow hover in star background view (even when not dragging)
+    if (isStarBackgroundView || window.isStarBackgroundView) {
+      const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
+      if (THREE) {
+        const cameraEl = scene.querySelector('a-camera');
+        if (cameraEl && cameraEl.object3D) {
+          const camera = cameraEl.getObject3D('camera');
+          if (camera) {
+            // Get renderer from scene
+            const renderer = scene.renderer || (scene.systems && scene.systems.renderer && scene.systems.renderer.renderer);
+            if (renderer && renderer.domElement) {
+              // Initialize mouse if needed
+              if (!mouse) {
+                mouse = new THREE.Vector2();
+              }
+              
+              // Normalize mouse coordinates
+              const rect = renderer.domElement.getBoundingClientRect();
+              mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+              mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+              
+              // Create raycaster
+              if (!raycaster) {
+                raycaster = new THREE.Raycaster();
+              }
+              raycaster.setFromCamera(mouse, camera);
+              
+              // Check for intersection with arrows
+              const arrows = document.querySelectorAll('.greek-arrow-up, .greek-arrow-down');
+              const arrowIntersects = [];
+              
+              arrows.forEach(arrow => {
+                if (arrow.object3D) {
+                  const intersect = raycaster.intersectObject(arrow.object3D, true);
+                  if (intersect.length > 0) {
+                    arrowIntersects.push({ element: arrow, distance: intersect[0].distance });
+                  }
+                }
+              });
+              
+              // Reset previously hovered arrow to black
+              if (hoveredArrow && hoveredArrow !== null) {
+                hoveredArrow.setAttribute('color', '#000000');
+                hoveredArrow = null;
+              }
+              
+              // Highlight new hovered arrow
+              if (arrowIntersects.length > 0) {
+                arrowIntersects.sort((a, b) => a.distance - b.distance);
+                const hoveredArrowElement = arrowIntersects[0].element;
+                
+                hoveredArrowElement.setAttribute('color', '#FFFF00'); // Yellow
+                hoveredArrow = hoveredArrowElement;
+              }
+            }
+          }
+        }
+      }
+    }
+    
     if (!isDragging || !isTopDownView) return;
     
     // Handle planet dragging
@@ -2069,10 +2235,7 @@ function initSolarSystem() {
       const availableStars = constellationStars[folder];
       const randomStar = availableStars[Math.floor(Math.random() * availableStars.length)];
       
-      // Handle special case for Cygnus which has spaces in filenames
-      const starFileName = folder === 'Cygnus' 
-        ? `${folder} -  ${randomStar}.png`
-        : `${folder} - ${randomStar}.png`;
+      const starFileName = `${folder} - ${randomStar}.png`;
       
       return {
         folder: folder,
@@ -2083,6 +2246,121 @@ function initSolarSystem() {
     
     console.log('Selected constellations:', selectedConstellations);
     return selectedConstellations;
+  }
+  
+  // Greek alphabet lowercase letters
+  const greekAlphabet = ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta', 'eta', 'theta', 'iota', 'kappa', 'lambda', 'mu', 'nu', 'xi', 'omicron', 'pi', 'rho', 'sigma', 'tau', 'upsilon', 'phi', 'chi', 'psi', 'omega'];
+  
+  // Get image path for a Greek letter (capitalize first letter to match file names)
+  function getGreekLetterImagePath(letterName) {
+    const capitalizedName = letterName.charAt(0).toUpperCase() + letterName.slice(1);
+    return `data/greek_alphabets/${capitalizedName}.png`;
+  }
+  
+  // Store current letter index for each input control
+  const greekInputIndices = {};
+  
+  // Track currently hovered arrow for hover effects
+  let hoveredArrow = null;
+  
+  // Create Greek alphabet input control below a constellation image
+  function createGreekInputControl(index, imagePosition, imageHeight, bgRotation, bgScale) {
+    const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
+    if (!THREE) return;
+    
+    // Initialize index for this control (start at alpha = 0)
+    greekInputIndices[index] = 0;
+    
+    // Calculate position below the image
+    // Position the control below the image (lower Y value)
+    // Image is at bgPosition.y, so control should be at bgPosition.y - imageHeight/2 - some offset
+    const controlY = 1;
+    const controlX = imagePosition.x;
+    const controlZ = imagePosition.z;
+    
+    // Create container for the input control
+    const controlContainer = document.createElement('a-entity');
+    controlContainer.setAttribute('class', 'greek-input-control');
+    controlContainer.setAttribute('data-index', index);
+    controlContainer.setAttribute('position', `${controlX} ${controlY} ${controlZ}`);
+    controlContainer.setAttribute('rotation', `${bgRotation.x} ${bgRotation.y} ${bgRotation.z}`);
+    controlContainer.setAttribute('scale', '5 5 1');
+    
+    // Create white box for displaying the Greek letter
+    const letterBox = document.createElement('a-box');
+    letterBox.setAttribute('class', 'greek-letter-box');
+    letterBox.setAttribute('data-index', index);
+    letterBox.setAttribute('position', '0 0 0.01');
+    letterBox.setAttribute('width', '0.15');
+    letterBox.setAttribute('height', '0.15');
+    letterBox.setAttribute('depth', '0.01');
+    letterBox.setAttribute('color', '#FFFFFF');
+    letterBox.setAttribute('material', 'side: double');
+    
+    // Create image element for the Greek letter
+    // Create image in a separate entity that faces the camera properly
+    const imageContainer = document.createElement('a-entity');
+    imageContainer.setAttribute('class', 'greek-image-container');
+    imageContainer.setAttribute('data-index', index);
+    imageContainer.setAttribute('position', '0 0 0.02');
+    imageContainer.setAttribute('rotation', '0 0 0'); // No rotation
+    
+    // Create image element for Greek letter
+    const letterImage = document.createElement('a-image');
+    letterImage.setAttribute('class', 'greek-letter-image');
+    letterImage.setAttribute('data-index', index);
+    letterImage.setAttribute('position', '0 0 0');
+    letterImage.setAttribute('material', 'side: double');
+    
+    // Load image to get aspect ratio
+    const img = new Image();
+    img.onload = function() {
+      const aspectRatio = img.width / img.height;
+      const baseWidth = 0.12; // Base width relative to the white box
+      const imageHeight = baseWidth / aspectRatio;
+      
+      letterImage.setAttribute('width', baseWidth);
+      letterImage.setAttribute('height', imageHeight);
+      letterImage.setAttribute('src', getGreekLetterImagePath(greekAlphabet[0])); // Start with alpha
+    };
+    img.onerror = function() {
+      console.warn(`Failed to load Greek letter image: ${getGreekLetterImagePath(greekAlphabet[0])}`);
+    };
+    img.src = getGreekLetterImagePath(greekAlphabet[0]);
+    
+    imageContainer.appendChild(letterImage);
+    
+    // Create up arrow as a visible rectangular box (top)
+    const upArrow = document.createElement('a-box');
+    upArrow.setAttribute('class', 'greek-arrow-up');
+    upArrow.setAttribute('data-index', index);
+    upArrow.setAttribute('position', '0 0.1 0.01');
+    upArrow.setAttribute('width', '0.08');
+    upArrow.setAttribute('height', '0.03');
+    upArrow.setAttribute('depth', '0.005');
+    upArrow.setAttribute('color', '#000000');
+    upArrow.setAttribute('material', 'side: double');
+    
+    // Create down arrow as a visible rectangular box (bottom)
+    const downArrow = document.createElement('a-box');
+    downArrow.setAttribute('class', 'greek-arrow-down');
+    downArrow.setAttribute('data-index', index);
+    downArrow.setAttribute('position', '0 -0.1 0.01');
+    downArrow.setAttribute('width', '0.08');
+    downArrow.setAttribute('height', '0.03');
+    downArrow.setAttribute('depth', '0.005');
+    downArrow.setAttribute('color', '#000000');
+    downArrow.setAttribute('material', 'side: double');
+    
+    // Event handlers are handled by the raycaster system in handleMouseDown
+    
+    // Append all elements to container (boxes first for layering, then image on top)
+    controlContainer.appendChild(letterBox);
+    controlContainer.appendChild(imageContainer);
+    controlContainer.appendChild(upArrow);
+    controlContainer.appendChild(downArrow);
+    
+    return controlContainer;
   }
   
   // Create and position constellation images in front of star background
@@ -2120,9 +2398,11 @@ function initSolarSystem() {
       scene.appendChild(container);
     }
     
-    // Remove any existing constellation images
+    // Remove any existing constellation images and input controls
     const existingImages = container.querySelectorAll('.constellation-image');
     existingImages.forEach(img => img.remove());
+    const existingControls = container.querySelectorAll('.greek-input-control');
+    existingControls.forEach(ctrl => ctrl.remove());
     
     // Create 4 constellation images with proper aspect ratio
     selectedConstellations.forEach((constellation, index) => {
@@ -2135,11 +2415,12 @@ function initSolarSystem() {
         
         const image = document.createElement('a-image');
         image.setAttribute('class', 'constellation-image');
-        image.setAttribute('position', {
+        const imagePosition = {
           x: imageX,
           y: bgPosition.y,
           z: zPositions[index]
-        });
+        };
+        image.setAttribute('position', imagePosition);
         image.setAttribute('rotation', `${bgRotation.x} ${bgRotation.y} ${bgRotation.z}`);
         image.setAttribute('width', imageWidth);
         image.setAttribute('height', imageHeight);
@@ -2148,6 +2429,13 @@ function initSolarSystem() {
         image.setAttribute('material', 'side: double');
         
         container.appendChild(image);
+        
+        // Create Greek alphabet input control below this image
+        const inputControl = createGreekInputControl(index, imagePosition, imageHeight, bgRotation, bgScale);
+        if (inputControl) {
+          container.appendChild(inputControl);
+        }
+        
         console.log(`Created constellation image ${index + 1}: ${constellation.folder} - ${constellation.star} (${imageWidth.toFixed(2)} x ${imageHeight.toFixed(2)}, aspect ratio: ${aspectRatio.toFixed(2)})`);
       };
       img.onerror = function() {
