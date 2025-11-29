@@ -12,7 +12,7 @@ if (typeof AFRAME !== 'undefined') {
   });
 }
 
-// Lock rotation component for top-down view and blackboard view
+// Lock rotation component for top-down view, blackboard view, and star background view
 AFRAME.registerComponent('lock-rotation', {
   tick: function() {
     if (window.isTopDownView) {
@@ -22,6 +22,10 @@ AFRAME.registerComponent('lock-rotation', {
     } else if (window.isBlackboardView) {
       // Lock rotation for blackboard view (use stored rotation or default to looking at blackboard)
       const rotation = window.blackboardViewRotation || { x: 0, y: 0, z: 0 };
+      this.el.setAttribute('rotation', `${rotation.x} ${rotation.y} ${rotation.z}`);
+    } else if (window.isStarBackgroundView) {
+      // Lock rotation for star background view (use stored rotation or default to looking at star background)
+      const rotation = window.starBackgroundViewRotation || { x: 0, y: 0, z: 0 };
       this.el.setAttribute('rotation', `${rotation.x} ${rotation.y} ${rotation.z}`);
     }
   }
@@ -92,8 +96,9 @@ function initSolarSystem() {
   let isNearSolarSystem = false;
   let isNearTable2 = false;
   let isNearBlackboard = false;
-  let currentTable = null; // Track which table we're near ('solar-system', 'table-2', or 'blackboard')
-  const PROXIMITY_THRESHOLD = 5; // Distance threshold to show UI
+  let isNearStarBackground = false;
+  let currentTable = null; // Track which table we're near ('solar-system', 'table-2', 'blackboard', or 'star-background')
+  const PROXIMITY_THRESHOLD = 4; // Distance threshold to show UI
   
   // ESC UI state
   let escUI = null;
@@ -106,6 +111,7 @@ function initSolarSystem() {
   // Camera view state
   let isTopDownView = false;
   let isBlackboardView = false;
+  let isStarBackgroundView = false;
   let topDownViewTableId = null; // Track which table we're viewing in top-down view
   let originalCameraPosition = null;
   let originalCameraRotation = null;
@@ -175,6 +181,19 @@ function initSolarSystem() {
       x: blackboardPos.x,
       y: blackboardPos.y,
       z: blackboardPos.z
+    };
+  }
+  
+  // Helper function to get star background world position (center of image)
+  function getStarBackgroundWorldPosition() {
+    const starImage = document.getElementById('star-background-image');
+    if (!starImage) return { x: -6.53, y: 3.2, z: -13.455 };
+    
+    const starPos = starImage.getAttribute('position');
+    return {
+      x: starPos.x,
+      y: starPos.y,
+      z: starPos.z
     };
   }
   
@@ -494,6 +513,100 @@ function initSolarSystem() {
     console.log('Switched to top-down view for table:', tableId);
   }
   
+  // Switch to star background view
+  function switchToStarBackgroundView() {
+    const cameraEl = scene.querySelector('a-camera');
+    if (!cameraEl) return;
+    
+    // Get star background position
+    const starPos = getStarBackgroundWorldPosition();
+    
+    // Position camera: x = -3, y = 2.5, same z as star background (looking from right side of room)
+    const starBackgroundViewPosition = {
+      x: -3, // Camera x position (to the right of the image, facing left)
+      y: 2.5, // Camera y position (at wall height)
+      z: -13.455 // Same z as star background
+    };
+    
+    // Fixed rotation for star background view
+    const starBackgroundViewRotation = { x: 0, y: 90, z: 0 };
+    
+    // Store rotation for lock-rotation component
+    window.starBackgroundViewRotation = starBackgroundViewRotation;
+    
+    // Disable camera controls to prevent movement
+    if (cameraEl.components && cameraEl.components['look-controls']) {
+      cameraEl.components['look-controls'].enabled = false;
+    }
+    if (cameraEl.components && cameraEl.components['wasd-controls']) {
+      cameraEl.components['wasd-controls'].enabled = false;
+    }
+    // Also disable via attributes
+    cameraEl.setAttribute('look-controls', 'enabled', false);
+    cameraEl.setAttribute('wasd-controls', 'enabled', false);
+    
+    // Set rotation immediately (before animation) so camera looks at star background from the start
+    cameraEl.setAttribute('rotation', `${starBackgroundViewRotation.x} ${starBackgroundViewRotation.y} ${starBackgroundViewRotation.z}`);
+    
+    // Animate camera to star background view position (rotation is already set)
+    cameraEl.setAttribute('animation__position', {
+      property: 'position',
+      to: `${starBackgroundViewPosition.x} ${starBackgroundViewPosition.y} ${starBackgroundViewPosition.z}`,
+      dur: 500,
+      easing: 'easeInOutCubic'
+    });
+    
+    // Also animate rotation to ensure smooth transition (though it's already set)
+    cameraEl.setAttribute('animation__rotation', {
+      property: 'rotation',
+      to: `${starBackgroundViewRotation.x} ${starBackgroundViewRotation.y} ${starBackgroundViewRotation.z}`,
+      dur: 500,
+      easing: 'easeInOutCubic'
+    });
+    
+    // After animation completes, ensure position and rotation are set correctly
+    setTimeout(() => {
+      cameraEl.setAttribute('position', {
+        x: starBackgroundViewPosition.x,
+        y: starBackgroundViewPosition.y,
+        z: starBackgroundViewPosition.z
+      });
+      cameraEl.setAttribute('rotation', `${starBackgroundViewRotation.x} ${starBackgroundViewRotation.y} ${starBackgroundViewRotation.z}`);
+    }, 500);
+    
+    // Add component to continuously lock rotation
+    if (!cameraEl.hasAttribute('lock-rotation')) {
+      cameraEl.setAttribute('lock-rotation', '');
+    }
+    
+    // Hide proximity UI in star background view
+    if (proximityUI) {
+      if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
+        proximityUI.setAttribute('visible', 'false');
+      } else {
+        proximityUI.classList.add('hidden');
+      }
+    }
+    
+    // Show ESC UI in star background view
+    if (escUI) {
+      if (escUI.tagName && escUI.tagName.toLowerCase() === 'a-entity') {
+        escUI.setAttribute('visible', 'true');
+      } else {
+        escUI.classList.remove('hidden');
+      }
+    }
+    
+    // Hide completion message when switching views
+    hideCompletionMessage();
+    
+    isStarBackgroundView = true;
+    window.isTopDownView = false; // Not top-down, but locked view
+    window.isBlackboardView = false; // Not blackboard view
+    window.isStarBackgroundView = true; // Set global flag for lock-rotation component
+    console.log('Switched to star background view');
+  }
+  
   // Switch to blackboard view
   function switchToBlackboardView() {
     const cameraEl = scene.querySelector('a-camera');
@@ -670,6 +783,11 @@ function initSolarSystem() {
     window.isBlackboardView = false;
     window.blackboardViewRotation = null;
     
+    // Reset star background view state
+    isStarBackgroundView = false;
+    window.isStarBackgroundView = false;
+    window.starBackgroundViewRotation = null;
+    
     console.log('Restoring camera position:', originalCameraPosition);
     console.log('Restoring camera rotation:', originalCameraRotation);
     
@@ -780,8 +898,8 @@ function initSolarSystem() {
     window.isTopDownView = false;
     window.topDownYRotation = 0; // Clear stored Y rotation
     
-    // Show proximity UI again if near a table or blackboard
-    if (proximityUI && (isNearSolarSystem || isNearTable2 || isNearBlackboard)) {
+    // Show proximity UI again if near a table, blackboard, or star background
+    if (proximityUI && (isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground)) {
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'true');
       } else {
@@ -808,13 +926,36 @@ function initSolarSystem() {
   function handleKeyPress(e) {
     // Check if E key is pressed
     if (e.key === 'e' || e.key === 'E') {
-      console.log('E key pressed - isNearSolarSystem:', isNearSolarSystem, 'isNearTable2:', isNearTable2, 'isNearBlackboard:', isNearBlackboard, 'currentTable:', currentTable, 'isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView);
-      // Check if in any special view (top-down or blackboard)
-      if (isTopDownView || isBlackboardView) {
+      console.log('E key pressed - isNearSolarSystem:', isNearSolarSystem, 'isNearTable2:', isNearTable2, 'isNearBlackboard:', isNearBlackboard, 'isNearStarBackground:', isNearStarBackground, 'currentTable:', currentTable, 'isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView, 'isStarBackgroundView:', isStarBackgroundView);
+      // Check if in any special view (top-down, blackboard, or star background)
+      if (isTopDownView || isBlackboardView || isStarBackgroundView) {
         switchToOriginalView();
       } else {
+        // Check if near star background
+        if (isNearStarBackground && currentTable === 'star-background') {
+          // Save current camera position and rotation BEFORE switching to star background view
+          const cameraEl = scene.querySelector('a-camera');
+          if (cameraEl) {
+            const pos = cameraEl.getAttribute('position');
+            const rot = cameraEl.getAttribute('rotation');
+            // Create a copy of the position and rotation objects
+            originalCameraPosition = {
+              x: pos.x,
+              y: pos.y,
+              z: pos.z
+            };
+            originalCameraRotation = {
+              x: rot.x,
+              y: rot.y,
+              z: rot.z
+            };
+            console.log('Saved camera position:', originalCameraPosition);
+            console.log('Saved camera rotation:', originalCameraRotation);
+          }
+          switchToStarBackgroundView();
+        }
         // Check if near blackboard
-        if (isNearBlackboard && currentTable === 'blackboard') {
+        else if (isNearBlackboard && currentTable === 'blackboard') {
           // Save current camera position and rotation BEFORE switching to blackboard view
           const cameraEl = scene.querySelector('a-camera');
           if (cameraEl) {
@@ -861,15 +1002,15 @@ function initSolarSystem() {
           const tableId = currentTable === 'table-2' ? 'table-2' : 'table';
           switchToTopDownView(tableId);
         } else {
-          console.log('E key pressed but not near any table or blackboard');
+          console.log('E key pressed but not near any table, blackboard, or star background');
         }
       }
     }
     // Check if Q key is pressed (alone, not with other keys)
     if (e.key === 'q' || e.key === 'Q') {
-      console.log('Q key pressed - isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView);
-      // Only switch back if in top-down view or blackboard view
-      if (isTopDownView || isBlackboardView) {
+      console.log('Q key pressed - isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView, 'isStarBackgroundView:', isStarBackgroundView);
+      // Only switch back if in top-down view, blackboard view, or star background view
+      if (isTopDownView || isBlackboardView || isStarBackgroundView) {
         switchToOriginalView();
         e.preventDefault(); // Prevent default browser behavior
       }
@@ -975,8 +1116,8 @@ function initSolarSystem() {
   
   // Show completion message
   function showCompletionMessage(puzzleName) {
-    // Only show in camera lock mode (top-down view or blackboard view)
-    if (!isTopDownView && !isBlackboardView) {
+    // Only show in camera lock mode (top-down view, blackboard view, or star background view)
+    if (!isTopDownView && !isBlackboardView && !isStarBackgroundView) {
       return;
     }
     
@@ -1064,22 +1205,32 @@ function initSolarSystem() {
     const dz3 = cameraWorldPos.z - blackboardPos.z;
     const distanceToBlackboard = Math.sqrt(dx3 * dx3 + dy3 * dy3 + dz3 * dz3);
     
+    // Check distance to star background
+    const starBackgroundPos = getStarBackgroundWorldPosition();
+    const dx4 = cameraWorldPos.x - starBackgroundPos.x;
+    const dy4 = cameraWorldPos.y - starBackgroundPos.y;
+    const dz4 = cameraWorldPos.z - starBackgroundPos.z;
+    const distanceToStarBackground = Math.sqrt(dx4 * dx4 + dy4 * dy4 + dz4 * dz4);
+    
     // Determine which is closer and within threshold
     const nearSolarSystem = distanceToSolarSystem <= PROXIMITY_THRESHOLD;
     const nearTable2 = distanceToTable2 <= PROXIMITY_THRESHOLD;
     const nearBlackboard = distanceToBlackboard <= PROXIMITY_THRESHOLD;
+    const nearStarBackground = distanceToStarBackground <= PROXIMITY_THRESHOLD;
     
     // Update state
-    const wasNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard;
+    const wasNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground;
     isNearSolarSystem = nearSolarSystem;
     isNearTable2 = nearTable2;
     isNearBlackboard = nearBlackboard;
+    isNearStarBackground = nearStarBackground;
     
-    // Determine current table/blackboard (prioritize closest if multiple are near)
+    // Determine current table/blackboard/star background (prioritize closest if multiple are near)
     const distances = [];
     if (nearSolarSystem) distances.push({ type: 'solar-system', distance: distanceToSolarSystem });
     if (nearTable2) distances.push({ type: 'table-2', distance: distanceToTable2 });
     if (nearBlackboard) distances.push({ type: 'blackboard', distance: distanceToBlackboard });
+    if (nearStarBackground) distances.push({ type: 'star-background', distance: distanceToStarBackground });
     
     if (distances.length > 0) {
       distances.sort((a, b) => a.distance - b.distance);
@@ -1088,9 +1239,9 @@ function initSolarSystem() {
       currentTable = null;
     }
     
-    // Show/hide UI based on proximity (but not in top-down view or blackboard view)
-    const isNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard;
-    if (isNearAny && !wasNearAny && !isTopDownView && !isBlackboardView) {
+    // Show/hide UI based on proximity (but not in top-down view, blackboard view, or star background view)
+    const isNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground;
+    if (isNearAny && !wasNearAny && !isTopDownView && !isBlackboardView && !isStarBackgroundView) {
       // Just entered proximity (only show if not in top-down view)
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'true');
@@ -1099,8 +1250,8 @@ function initSolarSystem() {
         proximityUI.classList.remove('hidden');
         console.log('Proximity UI shown (near:', currentTable, ')');
       }
-    } else if ((!isNearAny && wasNearAny) || isTopDownView || isBlackboardView) {
-      // Just left proximity, or in top-down view or blackboard view - hide proximity UI
+    } else if ((!isNearAny && wasNearAny) || isTopDownView || isBlackboardView || isStarBackgroundView) {
+      // Just left proximity, or in top-down view, blackboard view, or star background view - hide proximity UI
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'false');
       } else {
@@ -1873,6 +2024,139 @@ function initSolarSystem() {
     console.log('Constellation game initialized');
   }
   
+  // Set correct aspect ratio for star background image
+  function setStarBackgroundAspectRatio() {
+    const starImage = document.getElementById('star-background-image');
+    if (!starImage) return;
+    
+    const img = new Image();
+    img.onload = function() {
+      const aspectRatio = img.width / img.height;
+      const width = 4; // Keep width at 4
+      const height = width / aspectRatio; // Calculate height based on aspect ratio
+      
+      starImage.setAttribute('height', height);
+      console.log(`Star background image aspect ratio set: ${width} x ${height} (ratio: ${aspectRatio.toFixed(2)})`);
+    };
+    img.onerror = function() {
+      console.warn('Failed to load star background image for aspect ratio calculation');
+    };
+    img.src = 'data/star_constellations/star_background.jpg';
+  }
+  
+  // Constellation folder to star images mapping
+  const constellationStars = {
+    'Andromeda': ['alpha', 'beta', 'delta', 'gamma', 'mu', 'nu'],
+    'Auriga': ['alpha', 'beta', 'gamma', 'iota', 'theta', 'zeta'],
+    'Cassiopeia': ['alpha', 'beta', 'delta', 'epsilon', 'gamma'],
+    'Cygnus': ['alpha', 'beta', 'delta', 'iota', 'zeta', 'epsilon', 'eta', 'gamma', 'kappa', 'mu'],
+    'Pegasus': ['alpha', 'beta', 'delta', 'epsilon', 'eta', 'gamma', 'iota', 'kappa', 'lambda', 'mu', 'pi', 'theta', 'xi', 'zeta'],
+    'Perseus': ['alpha', 'beta', 'delta', 'epsilon', 'eta', 'gamma', 'omicron', 'rho', 'xi', 'zeta'],
+    'Ursa Major': ['alpha', 'beta', 'chi', 'delta', 'epsilon', 'eta', 'gamma', 'iota', 'kappa', 'lambda', 'mu', 'omicron', 'phi', 'psi', 'theta', 'upsilon', 'zeta'],
+    'Ursa Minor': ['alpha', 'beta', 'delta', 'epsilon', 'eta', 'gamma', 'zeta']
+  };
+  
+  // Randomly select 4 constellation folders and one star from each
+  function selectRandomConstellations() {
+    const constellationFolders = Object.keys(constellationStars);
+    
+    // Randomly shuffle and select 4 unique folders
+    const shuffled = [...constellationFolders].sort(() => Math.random() - 0.5);
+    const selectedFolders = shuffled.slice(0, 4);
+    
+    // For each selected folder, randomly select one star
+    const selectedConstellations = selectedFolders.map(folder => {
+      const availableStars = constellationStars[folder];
+      const randomStar = availableStars[Math.floor(Math.random() * availableStars.length)];
+      
+      // Handle special case for Cygnus which has spaces in filenames
+      const starFileName = folder === 'Cygnus' 
+        ? `${folder} -  ${randomStar}.png`
+        : `${folder} - ${randomStar}.png`;
+      
+      return {
+        folder: folder,
+        star: randomStar,
+        path: `data/star_constellations/${folder}/${starFileName}`
+      };
+    });
+    
+    console.log('Selected constellations:', selectedConstellations);
+    return selectedConstellations;
+  }
+  
+  // Create and position constellation images in front of star background
+  function createConstellationImages() {
+    // Get star background position and properties
+    const starBackground = document.getElementById('star-background-image');
+    if (!starBackground) {
+      console.warn('Star background image not found');
+      return;
+    }
+    
+    const bgPosition = starBackground.getAttribute('position');
+    const bgRotation = starBackground.getAttribute('rotation');
+    const bgWidth = starBackground.getAttribute('width') || 4;
+    const bgScale = starBackground.getAttribute('scale') || { x: 1, y: 1, z: 1 };
+    
+    // Select random constellations
+    const selectedConstellations = selectRandomConstellations();
+    
+    // Calculate positions for 4 images arranged horizontally
+    // Background width is 4, so each image should be width 1 (1/4 of background)
+    const imageWidth = bgWidth / 4; // 1 unit
+    
+    // Specific Z positions for the 4 constellation images
+    const zPositions = [-9.725, -12.222, -14.722, -17.212];
+    
+    // Fixed X position for constellation images
+    const imageX = -6.520;
+    
+    // Create container entity for constellation images (or use scene directly)
+    let container = document.getElementById('constellation-images-container');
+    if (!container) {
+      container = document.createElement('a-entity');
+      container.setAttribute('id', 'constellation-images-container');
+      scene.appendChild(container);
+    }
+    
+    // Remove any existing constellation images
+    const existingImages = container.querySelectorAll('.constellation-image');
+    existingImages.forEach(img => img.remove());
+    
+    // Create 4 constellation images with proper aspect ratio
+    selectedConstellations.forEach((constellation, index) => {
+      // Load image to get its natural aspect ratio
+      const img = new Image();
+      img.onload = function() {
+        const aspectRatio = img.width / img.height;
+        // Calculate height based on aspect ratio to maintain proportions
+        const imageHeight = imageWidth / aspectRatio;
+        
+        const image = document.createElement('a-image');
+        image.setAttribute('class', 'constellation-image');
+        image.setAttribute('position', {
+          x: imageX,
+          y: bgPosition.y,
+          z: zPositions[index]
+        });
+        image.setAttribute('rotation', `${bgRotation.x} ${bgRotation.y} ${bgRotation.z}`);
+        image.setAttribute('width', imageWidth);
+        image.setAttribute('height', imageHeight);
+        image.setAttribute('scale', `${bgScale.x} ${bgScale.y} ${bgScale.z}`);
+        image.setAttribute('src', constellation.path);
+        image.setAttribute('material', 'side: double');
+        
+        container.appendChild(image);
+        console.log(`Created constellation image ${index + 1}: ${constellation.folder} - ${constellation.star} (${imageWidth.toFixed(2)} x ${imageHeight.toFixed(2)}, aspect ratio: ${aspectRatio.toFixed(2)})`);
+      };
+      img.onerror = function() {
+        console.warn(`Failed to load constellation image: ${constellation.path}`);
+      };
+      img.src = constellation.path;
+    });
+  }
+  
   if (scene) {
     // Function to initialize everything
     function initialize() {
@@ -1882,6 +2166,8 @@ function initSolarSystem() {
       initCompletionMessageUI();
       initDragAndDrop();
       initConstellationGame();
+      setStarBackgroundAspectRatio();
+      createConstellationImages();
       // Don't start animation automatically - wait for all planets to be correctly placed
     }
     
@@ -1903,6 +2189,8 @@ function initSolarSystem() {
       initCompletionMessageUI();
       initDragAndDrop();
       initConstellationGame();
+      setStarBackgroundAspectRatio();
+      createConstellationImages();
       // Don't start animation automatically - wait for all planets to be correctly placed
     }, 500);
   }
