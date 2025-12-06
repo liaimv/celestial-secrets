@@ -123,10 +123,10 @@ function initSolarSystem() {
   let sphereOriginalPositions = new Map();
   let sphereInitialPositions = new Map(); // Never changes - stores very initial starting positions
   let sphereCorrectPlacements = {
-    'pisces': false,
-    'cancer': false,
-    'libra': false,
-    'sagittarius': false
+    'air': false,
+    'earth': false,
+    'fire': false,
+    'water': false
   }; // Track which spheres are correctly placed
   let isDragging = false;
   let raycaster = null;
@@ -198,18 +198,18 @@ function initSolarSystem() {
   }
   
   // Check if a sphere position is over any image on table-2
-  // Returns the zodiac name if over an image, null otherwise
+  // Returns the element name if over an image, null otherwise
   function getImageAtPosition(spherePosition) {
     // Image positions relative to table-2 (from HTML)
-    // Images are at: -1.5 (Pisces), -0.5 (Sagittarius), 0.5 (Cancer), 1.5 (Libra) on X axis
-    // Z position: -3.500
+    // Images are at: -1.5 (Air), -0.5 (Earth), 0.5 (Fire), 1.5 (Water) on X axis
+    // Z position: -3.200
     // Width: 0.4 * 2 (scale) = 0.8
     // Height: 0.306 * 2 (scale) = 0.612
     const images = [
-      { x: -1.5, z: -3.500, width: 0.8, height: 0.612, zodiac: 'pisces' },
-      { x: -0.5, z: -3.500, width: 0.8, height: 0.612, zodiac: 'sagittarius' },
-      { x: 0.5, z: -3.500, width: 0.8, height: 0.612, zodiac: 'cancer' },
-      { x: 1.5, z: -3.500, width: 0.8, height: 0.612, zodiac: 'libra' }
+      { x: -1.5, z: -3.200, width: 0.8, height: 0.612, element: 'air' },
+      { x: -0.5, z: -3.200, width: 0.8, height: 0.612, element: 'earth' },
+      { x: 0.5, z: -3.200, width: 0.8, height: 0.612, element: 'fire' },
+      { x: 1.5, z: -3.200, width: 0.8, height: 0.612, element: 'water' }
     ];
     
     // Check if sphere is within bounds of any image
@@ -224,20 +224,20 @@ function initSolarSystem() {
           spherePosition.x <= image.x + halfWidth &&
           spherePosition.z >= image.z - halfHeight &&
           spherePosition.z <= image.z + halfHeight) {
-        return image.zodiac;
+        return image.element;
       }
     }
     
     return null;
   }
   
-  // Check if all spheres are correctly placed
+  // Check if all zodiac symbols are correctly placed
   function checkAllSpheresPlaced() {
     const allPlaced = Object.values(sphereCorrectPlacements).every(placed => placed === true);
     if (allPlaced) {
-      console.log('All spheres are placed on the correct images');
+      console.log('All zodiac symbols are placed on their correct element images!');
       // Show completion message
-      showCompletionMessage('Zodiac');
+      showCompletionMessage('Elements');
     }
     return allPlaced;
   }
@@ -1291,13 +1291,37 @@ function initSolarSystem() {
   function initializeSpherePositions() {
     const spheres = document.querySelectorAll('[data-sphere]');
     spheres.forEach(sphere => {
+      // Skip if positions are already stored (e.g., for dynamically created zodiac symbols)
+      if (sphereInitialPositions.has(sphere) && sphereOriginalPositions.has(sphere)) {
+        return;
+      }
+      
       // Store their original positions from HTML
       const pos = sphere.getAttribute('position');
-      const initialPos = {
-        x: pos.x,
-        y: pos.y,
-        z: pos.z
-      };
+      // Handle both object format {x, y, z} and string format "x y z"
+      let initialPos;
+      if (typeof pos === 'object' && pos.x !== undefined) {
+        initialPos = {
+          x: pos.x,
+          y: pos.y,
+          z: pos.z
+        };
+      } else if (typeof pos === 'string') {
+        const parts = pos.split(' ').map(parseFloat);
+        initialPos = {
+          x: parts[0],
+          y: parts[1],
+          z: parts[2]
+        };
+      } else {
+        // Fallback: try to read as object
+        initialPos = {
+          x: pos.x || 0,
+          y: pos.y || 0,
+          z: pos.z || 0
+        };
+      }
+      
       // Store in both maps - initial never changes, original can be updated
       sphereInitialPositions.set(sphere, initialPos);
       sphereOriginalPositions.set(sphere, initialPos);
@@ -1569,11 +1593,21 @@ function initSolarSystem() {
         // Store original position if not already stored
         if (!sphereOriginalPositions.has(draggedSphere)) {
           const pos = draggedSphere.getAttribute('position');
-          sphereOriginalPositions.set(draggedSphere, {
-            x: pos.x,
-            y: pos.y,
-            z: pos.z
-          });
+          // Handle both object and string formats
+          let posObj;
+          if (typeof pos === 'object' && pos.x !== undefined) {
+            posObj = { x: pos.x, y: pos.y, z: pos.z };
+          } else if (typeof pos === 'string') {
+            const parts = pos.split(' ').map(parseFloat);
+            posObj = { x: parts[0], y: parts[1], z: parts[2] };
+          } else {
+            posObj = { x: pos.x || 0, y: pos.y || 0, z: pos.z || 0 };
+          }
+          sphereOriginalPositions.set(draggedSphere, posObj);
+          // Also update initial position if not set
+          if (!sphereInitialPositions.has(draggedSphere)) {
+            sphereInitialPositions.set(draggedSphere, posObj);
+          }
         }
         
         event.preventDefault();
@@ -1824,10 +1858,10 @@ function initSolarSystem() {
       const currentPos = sphereToRelease.getAttribute('position');
       
       // Check if sphere is over an image and which one
-      const imageZodiac = getImageAtPosition(currentPos);
-      const sphereZodiac = sphereToRelease.getAttribute('data-zodiac');
+      const imageElement = getImageAtPosition(currentPos);
+      const sphereElement = sphereToRelease.getAttribute('data-element');
       
-      if (imageZodiac) {
+      if (imageElement) {
         // Sphere is over an image (correct or wrong) - allow it to stay
         // Update the current position tracking (but keep initial position unchanged)
         sphereOriginalPositions.set(sphereToRelease, {
@@ -1836,25 +1870,26 @@ function initSolarSystem() {
           z: currentPos.z
         });
         
-        // Check if it's the correct image
-        if (imageZodiac === sphereZodiac) {
-          // Correct match!
-          sphereCorrectPlacements[sphereZodiac] = true;
-          const zodiacName = sphereZodiac.charAt(0).toUpperCase() + sphereZodiac.slice(1);
-          console.log(`Correct sphere placed on ${zodiacName}`);
+        // Check if it's the correct image (zodiac symbol element matches image element)
+        if (imageElement === sphereElement) {
+          // Correct match! Zodiac symbol is on its corresponding element image
+          sphereCorrectPlacements[sphereElement] = true;
+          const elementName = sphereElement.charAt(0).toUpperCase() + sphereElement.slice(1);
+          console.log(`Correct zodiac symbol placed on ${elementName} element image`);
           
-          // Check if all spheres are correctly placed
+          // Check if all zodiac symbols are correctly placed
           checkAllSpheresPlaced();
         } else {
-          // Wrong image - mark as not correctly placed
-          if (sphereZodiac) {
-            sphereCorrectPlacements[sphereZodiac] = false;
+          // Wrong image - mark this zodiac symbol's element as not correctly placed
+          if (sphereElement) {
+            sphereCorrectPlacements[sphereElement] = false;
+            console.log(`Zodiac symbol for ${sphereElement} placed on wrong element image (${imageElement})`);
           }
         }
       } else {
         // Sphere is not over any image, return to initial starting position
-        if (sphereZodiac) {
-          sphereCorrectPlacements[sphereZodiac] = false; // Mark as not correctly placed
+        if (sphereElement) {
+          sphereCorrectPlacements[sphereElement] = false; // Mark as not correctly placed
         }
         const initialPos = sphereInitialPositions.get(sphereToRelease);
         if (initialPos) {
@@ -2417,6 +2452,84 @@ function initSolarSystem() {
     return controlContainer;
   }
   
+  // Zodiac symbols mapping by element
+  const zodiacSymbols = {
+    'air': ['Aquarius', 'Gemini', 'Libra'],
+    'earth': ['Capricorn', 'Taurus', 'Virgo'],
+    'fire': ['Aries', 'Leo', 'Sagittarius'],
+    'water': ['Cancer', 'Pisces', 'Scorpio']
+  };
+  
+  // Randomly select one zodiac symbol from each element folder
+  function selectRandomZodiacSymbols() {
+    const selected = {};
+    Object.keys(zodiacSymbols).forEach(element => {
+      const symbols = zodiacSymbols[element];
+      const randomIndex = Math.floor(Math.random() * symbols.length);
+      selected[element] = symbols[randomIndex];
+    });
+    console.log('Selected zodiac symbols:', selected);
+    return selected;
+  }
+  
+  // Replace spheres with zodiac symbols
+  function replaceSpheresWithZodiacSymbols() {
+    const selectedSymbols = selectRandomZodiacSymbols();
+    const table2 = document.querySelector('#table-2');
+    if (!table2) {
+      console.warn('Table-2 not found');
+      return;
+    }
+    
+    // Sphere positions and elements
+    const sphereData = [
+      { element: 'air', position: '1 0.32 -4.2', sphereId: 'sphere-1' },
+      { element: 'fire', position: '0.33 0.32 -4.2', sphereId: 'sphere-2' },
+      { element: 'water', position: '-0.33 0.32 -4.2', sphereId: 'sphere-3' },
+      { element: 'earth', position: '-1 0.32 -4.2', sphereId: 'sphere-4' }
+    ];
+    
+    // Remove existing spheres
+    const existingSpheres = table2.querySelectorAll('[data-sphere]');
+    existingSpheres.forEach(sphere => sphere.remove());
+    
+    // Create zodiac symbol models for each element
+    sphereData.forEach(({ element, position, sphereId }) => {
+      const zodiacName = selectedSymbols[element];
+      // Capitalize first letter of element for folder name (Air Zodiac, Earth Zodiac, etc.)
+      const elementFolder = element.charAt(0).toUpperCase() + element.slice(1) + ' Zodiac';
+      const objPath = `data/zodiac/zodiac symbols/${elementFolder}/${zodiacName}.obj`;
+      
+      // Parse position string to object
+      const posParts = position.split(' ').map(parseFloat);
+      const initialPos = {
+        x: posParts[0],
+        y: posParts[1],
+        z: posParts[2]
+      };
+      
+      // Create obj-model entity
+      const zodiacModel = document.createElement('a-obj-model');
+      zodiacModel.setAttribute('data-sphere', sphereId);
+      zodiacModel.setAttribute('data-element', element);
+      zodiacModel.setAttribute('class', 'draggable-sphere');
+      // Set position as object to ensure correct parsing
+      zodiacModel.setAttribute('position', initialPos);
+      zodiacModel.setAttribute('src', objPath);
+      zodiacModel.setAttribute('scale', '0.1 0.1 0.1'); // Scale down to fit on table
+      zodiacModel.setAttribute('rotation', '90 0 0');
+      zodiacModel.setAttribute('material', 'color: #000000'); // Black color
+      
+      table2.appendChild(zodiacModel);
+      
+      // Store positions immediately (before initializeSpherePositions runs)
+      sphereInitialPositions.set(zodiacModel, initialPos);
+      sphereOriginalPositions.set(zodiacModel, initialPos);
+      
+      console.log(`Created zodiac symbol for ${element}: ${zodiacName} at ${position}`);
+    });
+  }
+  
   // Create and position constellation images in front of star background
   function createConstellationImages() {
     // Get star background position and properties
@@ -2506,6 +2619,7 @@ function initSolarSystem() {
       initProximityUI();
       initESCUI();
       initCompletionMessageUI();
+      replaceSpheresWithZodiacSymbols();
       initDragAndDrop();
       initConstellationGame();
       setStarBackgroundAspectRatio();
@@ -2529,6 +2643,7 @@ function initSolarSystem() {
       initProximityUI();
       initESCUI();
       initCompletionMessageUI();
+      replaceSpheresWithZodiacSymbols();
       initDragAndDrop();
       initConstellationGame();
       setStarBackgroundAspectRatio();

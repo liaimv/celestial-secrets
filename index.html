@@ -214,21 +214,21 @@
       <!-- Back Right (leg edge matches table corner) -->
       <a-box position="2.06 -0.3 -2.1" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
       
-      <!-- Four Zodiac Images - horizontally in the middle towards the back -->
-      <a-plane position="-1.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Pisces.jpg" material="side: double"></a-plane>
-      <a-plane position="-0.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Sagittarius.jpg" material="side: double"></a-plane>
-      <a-plane position="0.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Cancer.jpg" material="side: double"></a-plane>
-      <a-plane position="1.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/Libra.jpg" material="side: double"></a-plane>
+      <!-- Four Elements Images - horizontally in the middle towards the back -->
+      <a-plane position="-1.5 0.31 -3.200" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Air.png" material="side: double; transparent: true"></a-plane>
+      <a-plane position="-0.5 0.31 -3.200" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Earth.png" material="side: double; transparent: true"></a-plane>
+      <a-plane position="0.5 0.31 -3.200" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Fire.png" material="side: double; transparent: true"></a-plane>
+      <a-plane position="1.5 0.31 -3.200" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Water.png" material="side: double; transparent: true"></a-plane>
       
       <!-- Four Spheres in front of the images -->
-      <!-- Blue sphere for Pisces -->
-      <a-sphere data-sphere="sphere-1" data-zodiac="pisces" class="draggable-sphere" position="-0.6 0.4 -4.3" radius="0.1" color="#0000FF"></a-sphere>
-      <!-- Cancer model for Cancer -->
-      <a-entity data-sphere="sphere-2" data-zodiac="cancer" class="draggable-sphere" position="-0.2 0.4 -4.3" rotation="90 0 0" obj-model="obj: url(data/zodiac/zodiac symbols/Cancer.obj)" material="color: #FFD700; metalness: 0.8; roughness: 0.2" scale="0.1 0.1 0.1"></a-entity>
-      <!-- Yellow sphere for Libra -->
-      <a-sphere data-sphere="sphere-3" data-zodiac="libra" class="draggable-sphere" position="0.2 0.4 -4.3" radius="0.1" color="#FFFF00"></a-sphere>
-      <!-- White sphere for Sagittarius -->
-      <a-sphere data-sphere="sphere-4" data-zodiac="sagittarius" class="draggable-sphere" position="0.6 0.4 -4.3" radius="0.1" color="#FFFFFF"></a-sphere>
+      <!-- Blue sphere for Air -->
+      <a-sphere data-sphere="sphere-1" data-element="air" class="draggable-sphere" position="-0.6 0.4 -4.3" radius="0.1" color="#0000FF"></a-sphere>
+      <!-- Red sphere for Fire -->
+      <a-sphere data-sphere="sphere-2" data-element="fire" class="draggable-sphere" position="-0.2 0.4 -4.3" radius="0.1" color="#FF0000"></a-sphere>
+      <!-- Blue sphere for Water -->
+      <a-sphere data-sphere="sphere-3" data-element="water" class="draggable-sphere" position="0.2 0.4 -4.3" radius="0.1" color="#0066FF"></a-sphere>
+      <!-- Brown sphere for Earth -->
+      <a-sphere data-sphere="sphere-4" data-element="earth" class="draggable-sphere" position="0.6 0.4 -4.3" radius="0.1" color="#8B4513"></a-sphere>
     </a-entity>
     
   </a-scene>
