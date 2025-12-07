@@ -202,14 +202,14 @@ function initSolarSystem() {
   function getImageAtPosition(spherePosition) {
     // Image positions relative to table-2 (from HTML)
     // Images are at: -1.5 (Air), -0.5 (Earth), 0.5 (Fire), 1.5 (Water) on X axis
-    // Z position: -3.200
+    // Z position: -3.9
     // Width: 0.4 * 2 (scale) = 0.8
     // Height: 0.306 * 2 (scale) = 0.612
     const images = [
-      { x: -1.5, z: -3.200, width: 0.8, height: 0.612, element: 'air' },
-      { x: -0.5, z: -3.200, width: 0.8, height: 0.612, element: 'earth' },
-      { x: 0.5, z: -3.200, width: 0.8, height: 0.612, element: 'fire' },
-      { x: 1.5, z: -3.200, width: 0.8, height: 0.612, element: 'water' }
+      { x: -1.5, z: -3.9, width: 0.8, height: 0.612, element: 'air' },
+      { x: -0.5, z: -3.9, width: 0.8, height: 0.612, element: 'earth' },
+      { x: 0.5, z: -3.9, width: 0.8, height: 0.612, element: 'fire' },
+      { x: 1.5, z: -3.9, width: 0.8, height: 0.612, element: 'water' }
     ];
     
     // Check if sphere is within bounds of any image
@@ -2483,10 +2483,10 @@ function initSolarSystem() {
     
     // Sphere positions and elements
     const sphereData = [
-      { element: 'air', position: '1 0.32 -4.2', sphereId: 'sphere-1' },
-      { element: 'fire', position: '0.33 0.32 -4.2', sphereId: 'sphere-2' },
-      { element: 'water', position: '-0.33 0.32 -4.2', sphereId: 'sphere-3' },
-      { element: 'earth', position: '-1 0.32 -4.2', sphereId: 'sphere-4' }
+      { element: 'air', position: '1 0.32 -3.200', sphereId: 'sphere-1' },
+      { element: 'fire', position: '0.33 0.32 -3.200', sphereId: 'sphere-2' },
+      { element: 'water', position: '-0.33 0.32 -3.200', sphereId: 'sphere-3' },
+      { element: 'earth', position: '-1 0.32 -3.200', sphereId: 'sphere-4' }
     ];
     
     // Remove existing spheres
