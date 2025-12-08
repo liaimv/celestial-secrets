@@ -54,6 +54,108 @@ AFRAME.registerComponent('case-animation-updater', {
   }
 });
 
+// Component to clamp camera position within room bounds
+AFRAME.registerComponent('camera-bounds', {
+  schema: {
+    minX: { type: 'number', default: -5.5 },
+    maxX: { type: 'number', default: 5.5 },
+    minZ: { type: 'number', default: -18.893 },
+    maxZ: { type: 'number', default: -7.934 }
+  },
+  init: function() {
+    // Define table bounds (world coordinates) with 0.5 unit buffer around tables
+    // Table 1 (solar system table): entity at (0, 1.2, -15), table top at (0, 0.25, -3.5) relative
+    // World position: (0, 1.45, -18.5), width: 16*0.27=4.32, depth: 6*0.5=3
+    // Adding 0.5 unit buffer on all sides
+    this.table1Bounds = {
+      minX: -2.16 - 0.5,
+      maxX: 2.16 + 0.5,
+      minZ: -20 - 0.5,
+      maxZ: -17 + 0.5
+    };
+    
+    // Table 2 (zodiac table): entity at (0, 1.2, -4.915), table top at (0, 0.25, -3.5) relative
+    // World position: (0, 1.45, -8.415), width: 16*0.27=4.32, depth: 6*0.5=3
+    // Adding 0.5 unit buffer on all sides
+    this.table2Bounds = {
+      minX: -2.16 - 0.5,
+      maxX: 2.16 + 0.5,
+      minZ: -9.915 - 0.5,
+      maxZ: -6.915 + 0.5
+    };
+  },
+  // Check if a point is inside a table area
+  isInsideTable: function(x, z, tableBounds) {
+    return x >= tableBounds.minX && x <= tableBounds.maxX &&
+           z >= tableBounds.minZ && z <= tableBounds.maxZ;
+  },
+  // Push position out of table area to nearest edge
+  pushOutOfTable: function(x, z, tableBounds) {
+    let newX = x;
+    let newZ = z;
+    
+    // Calculate distances to each edge
+    const distToLeft = Math.abs(x - tableBounds.minX);
+    const distToRight = Math.abs(x - tableBounds.maxX);
+    const distToFront = Math.abs(z - tableBounds.minZ);
+    const distToBack = Math.abs(z - tableBounds.maxZ);
+    
+    // Find minimum distance
+    const minDist = Math.min(distToLeft, distToRight, distToFront, distToBack);
+    
+    // Push to nearest edge
+    if (minDist === distToLeft) {
+      newX = tableBounds.minX;
+    } else if (minDist === distToRight) {
+      newX = tableBounds.maxX;
+    } else if (minDist === distToFront) {
+      newZ = tableBounds.minZ;
+    } else {
+      newZ = tableBounds.maxZ;
+    }
+    
+    return { x: newX, z: newZ };
+  },
+  tick: function() {
+    // Only apply bounds when not in special views (top-down, blackboard, star background)
+    if (window.isTopDownView || window.isBlackboardView || window.isStarBackgroundView) {
+      return;
+    }
+    
+    const pos = this.el.getAttribute('position');
+    if (!pos) return;
+    
+    let clampedX = Math.max(this.data.minX, Math.min(this.data.maxX, pos.x));
+    let clampedZ = Math.max(this.data.minZ, Math.min(this.data.maxZ, pos.z));
+    
+    // Check if camera is trying to enter table areas and push it out
+    if (this.isInsideTable(clampedX, clampedZ, this.table1Bounds)) {
+      const pushed = this.pushOutOfTable(clampedX, clampedZ, this.table1Bounds);
+      clampedX = pushed.x;
+      clampedZ = pushed.z;
+    }
+    
+    if (this.isInsideTable(clampedX, clampedZ, this.table2Bounds)) {
+      const pushed = this.pushOutOfTable(clampedX, clampedZ, this.table2Bounds);
+      clampedX = pushed.x;
+      clampedZ = pushed.z;
+    }
+    
+    // Ensure we're still within room bounds after pushing out of tables
+    clampedX = Math.max(this.data.minX, Math.min(this.data.maxX, clampedX));
+    clampedZ = Math.max(this.data.minZ, Math.min(this.data.maxZ, clampedZ));
+    
+    // Only update if position was changed
+    if (clampedX !== pos.x || clampedZ !== pos.z) {
+      this.el.setAttribute('position', {
+        x: clampedX,
+        y: pos.y,
+        z: clampedZ
+      });
+    }
+  }
+});
+
 function initSolarSystem() {
   const scene = document.querySelector('a-scene');
   
@@ -3121,14 +3223,14 @@ function initSolarSystem() {
       // Wall lamps on back wall corners
       {
         path: 'data/models/wall_lamp.glb',
-        position: { x: -6.232, y: 3.789, z: -20.007 },
+        position: { x: -6.232, y: 3.5, z: -20.007 },
         scale: 0.03,
         rotation: { x: 0, y: 180, z: 0 },
         hasLight: true
       },
       {
         path: 'data/models/wall_lamp.glb',
-        position: { x: 6.232, y: 3.789, z: -20.007 },
+        position: { x: 6.232, y: 3.5, z: -20.007 },
         scale: 0.03,
         rotation: { x: 0, y: 180, z: 0 },
         hasLight: true
@@ -3136,14 +3238,14 @@ function initSolarSystem() {
       // Wall lamps on front wall corners
       {
         path: 'data/models/wall_lamp.glb',
-        position: { x: -6.232, y: 3.789, z: -6.883 },
+        position: { x: -6.232, y: 3.5, z: -6.883 },
         scale: 0.03,
         rotation: { x: 0, y: 0, z: 0 },
         hasLight: true
       },
       {
         path: 'data/models/wall_lamp.glb',
-        position: { x: 6.232, y: 3.789, z: -6.883 },
+        position: { x: 6.232, y: 3.5, z: -6.883 },
         scale: 0.03,
         rotation: { x: 0, y: 0, z: 0 },
         hasLight: true
