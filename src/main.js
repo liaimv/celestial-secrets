@@ -446,6 +446,18 @@ function initSolarSystem() {
     'fire': false,
     'water': false
   }; // Track which spheres are correctly placed
+  
+  // Image data with isModelOn flag for each image
+  const imageData = [
+    { x: -1.5, z: -3.9, width: 0.8, height: 0.612, element: 'air', isModelOn: false },
+    { x: -0.5, z: -3.9, width: 0.8, height: 0.612, element: 'earth', isModelOn: false },
+    { x: 0.5, z: -3.9, width: 0.8, height: 0.612, element: 'fire', isModelOn: false },
+    { x: 1.5, z: -3.9, width: 0.8, height: 0.612, element: 'water', isModelOn: false }
+  ];
+  
+  // Track which image element each sphere is snapped to (sphere -> imageElement)
+  let sphereToImageElement = new Map();
+  
   let isDragging = false;
   let raycaster = null;
   let mouse = null;
@@ -453,11 +465,185 @@ function initSolarSystem() {
   // Constellation game state
   let firstSelectedStar = null; // Track the first clicked star (null when none selected)
   let constellationConnections = new Set(); // Track all connections made (to prevent duplicates)
-  const correctConnections = [
-    ['dubhe', 'merak'], ['merak', 'phecda'], ['phecda', 'megrez'],
-    ['megrez', 'dubhe'], ['megrez', 'alioth'], ['alioth', 'mizar'],
-    ['mizar', 'alkaid']
-  ];
+  let hoveredStar = null; // Track currently hovered star
+  let hoveredLine = null; // Track currently hovered line
+  
+  // Constellation data structure
+  const constellations = {
+    centaurus: {
+      name: 'Centaurus',
+      stars: [
+        { name: 'iota-centauri', position: '-0.4656 1.2579 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'd-centauri', position: '-0.5303 0.9496 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'menkent', position: '-1.2610 0.8656 0.01', radius: 0.02, emissive: 1.0 },
+        { name: 'nu-centauri', position: '-0.7221 0.6371 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'mu-centauri', position: '-0.6768 0.5616 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'eta-centauri', position: '-1.3703 0.0723 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'kappa-centauri', position: '-1.6958 -0.1993 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'upsilon-centauri', position: '-0.6941 0.2620 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'zeta-centauri', position: '-0.5216 0.0658 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'gamma-centauri', position: '0.5907 0.4754 0.01', radius: 0.025, emissive: 1.0 },
+        { name: 'sigma-centauri', position: '0.8300 0.4064 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'delta-centauri', position: '1.1260 0.4366 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'a-centauri', position: '1.6520 0.1089 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'lambda-centauri', position: '1.6951 -0.7361 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'epsilon-centauri', position: '-0.0316 -0.3093 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'hadar', position: '0.0503 -1.0357 0.01', radius: 0.02, emissive: 1.0 },
+        { name: 'alpha-centauri', position: '-0.2558 -1.3289 0.01', radius: 0.02, emissive: 1.0 }
+      ],
+      connections: [
+        ['menkent', 'nu-centauri'],
+        ['d-centauri', 'nu-centauri'],
+        ['d-centauri', 'iota-centauri'],
+        ['mu-centauri', 'nu-centauri'],
+        ['mu-centauri', 'upsilon-centauri'],
+        ['eta-centauri', 'kappa-centauri'],
+        ['upsilon-centauri', 'zeta-centauri'],
+        ['gamma-centauri', 'sigma-centauri'],
+        ['delta-centauri', 'sigma-centauri'],
+        ['a-centauri', 'delta-centauri'],
+        ['a-centauri', 'lambda-centauri'],
+        ['epsilon-centauri', 'zeta-centauri'],
+        ['epsilon-centauri', 'hadar'],
+        ['alpha-centauri', 'hadar'],
+        ['gamma-centauri', 'zeta-centauri'],
+        ['eta-centauri', 'mu-centauri']
+      ]
+    },
+    hydra: {
+      name: 'Hydra',
+      stars: [
+        { name: 'gamma-hydrae', position: '-3.4472 -0.9362 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'psi-hydrae', position: '-3.2252 -0.8953 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'beta-hydrae', position: '-1.4423 -1.8330 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'xi-hydrae', position: '-1.0391 -1.6196 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'nu-hydrae', position: '-0.0431 -0.1516 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'mu-hydrae', position: '0.4872 -0.2421 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'lambda-hydrae', position: '0.8861 0.1373 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'upsilon-hydrae', position: '1.2914 -0.1365 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'alphard', position: '1.9295 0.3766 0.01', radius: 0.025, emissive: 1.0 },
+        { name: 'tau-1-hydrae', position: '1.9511 0.9608 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'tau-2-hydrae', position: '1.9036 1.1246 0.01', radius: 0.02, emissive: 0.9 },
+        { name: '22-hydrae', position: '2.3693 1.4272 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'zeta-hydrae', position: '2.8759 1.7450 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'rho-hydrae', position: '3.0441 1.7134 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'epsilon-hydrae', position: '3.1052 1.7835 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'delta-hydrae', position: '3.3362 1.6819 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'sigma-hydrae', position: '3.2834 1.4458 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'eta-hydrae', position: '3.1611 1.4587 0.01', radius: 0.02, emissive: 0.9 }
+      ],
+      connections: [
+        ['gamma-hydrae', 'psi-hydrae'],
+        ['beta-hydrae', 'psi-hydrae'],
+        ['beta-hydrae', 'xi-hydrae'],
+        ['nu-hydrae', 'xi-hydrae'],
+        ['mu-hydrae', 'nu-hydrae'],
+        ['lambda-hydrae', 'mu-hydrae'],
+        ['lambda-hydrae', 'upsilon-hydrae'],
+        ['alphard', 'upsilon-hydrae'],
+        ['alphard', 'tau-1-hydrae'],
+        ['tau-1-hydrae', 'tau-2-hydrae'],
+        ['22-hydrae', 'tau-2-hydrae'],
+        ['22-hydrae', 'zeta-hydrae'],
+        ['delta-hydrae', 'epsilon-hydrae'],
+        ['delta-hydrae', 'sigma-hydrae'],
+        ['eta-hydrae', 'sigma-hydrae'],
+        ['eta-hydrae', 'rho-hydrae'],
+        ['rho-hydrae', 'zeta-hydrae'],
+        ['epsilon-hydrae', 'rho-hydrae']
+      ]
+    },
+    cetus: {
+      name: 'Cetus',
+      stars: [
+        { name: 'xi-1-ceti', position: '0.494 1.286 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'xi-2-ceti', position: '0.197 1.495 0.01', radius: 0.02, emissive: 0.9 },
+        { name: '87-ceti', position: '0 1.876 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'lambda-ceti', position: '-0.361 2.019 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'alpha-ceti', position: '-0.703 1.700 0.01', radius: 0.025, emissive: 1.0 },
+        { name: 'gamma-ceti', position: '-0.404 1.344 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'nu-ceti', position: '-0.123 1.399 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'delta-ceti', position: '-0.513 1.064 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'omicron-ceti', position: '-0.361 0.510 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'epsilon-ceti', position: '-1.290 0.152 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'pi-ceti', position: '-1.450 0.070 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'sigma-ceti', position: '-1.320 -0.207 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'tau-ceti', position: '-0.490 -0.957 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'diphda', position: '0.390 -2.021 0.01', radius: 0.025, emissive: 1.0 },
+        { name: 'iota-ceti', position: '1.440 -1.771 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'eta-ceti', position: '0.480 -1.075 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'theta-ceti', position: '0.330 -0.699 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'zeta-ceti', position: '-0.290 -0.437 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'rho-ceti', position: '-1.030 -0.072 0.01', radius: 0.02, emissive: 0.9 }
+      ],
+      connections: [
+        ['xi-1-ceti', 'xi-2-ceti'],
+        ['87-ceti', 'xi-2-ceti'],
+        ['nu-ceti', 'xi-2-ceti'],
+        ['gamma-ceti', 'nu-ceti'],
+        ['alpha-ceti', 'gamma-ceti'],
+        ['alpha-ceti', 'lambda-ceti'],
+        ['87-ceti', 'lambda-ceti'],
+        ['delta-ceti', 'gamma-ceti'],
+        ['delta-ceti', 'omicron-ceti'],
+        ['epsilon-ceti', 'omicron-ceti'],
+        ['epsilon-ceti', 'pi-ceti'],
+        ['pi-ceti', 'sigma-ceti'],
+        ['sigma-ceti', 'tau-ceti'],
+        ['diphda', 'tau-ceti'],
+        ['diphda', 'iota-ceti'],
+        ['epsilon-ceti', 'rho-ceti'],
+        ['rho-ceti', 'zeta-ceti'],
+        ['theta-ceti', 'zeta-ceti'],
+        ['eta-ceti', 'theta-ceti'],
+        ['diphda', 'eta-ceti']
+      ]
+    },
+    canisMajor: {
+      name: 'Canis Major',
+      stars: [
+        { name: 'theta-canis-majoris', position: '0.5497 0.7553 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'gamma-canis-majoris', position: '0.1502 0.6532 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'iota-canis-majoris', position: '0.1947 0.4348 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'alpha-canis-majoris', position: '0.4006 0.2932 0.01', radius: 0.025, emissive: 1.0 },
+        { name: 'omicron-2-canis-majoris', position: '-0.3442 0.0683 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'delta-canis-majoris', position: '-0.5914 -0.0337 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'omega-canis-majoris', position: '-0.7179 0.0324 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'eta-canis-majoris', position: '-1.0240 -0.0366 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'sigma-canis-majoris', position: '-0.5771 -0.2205 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'epsilon-canis-majoris', position: '-0.5986 -0.3254 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'kappa-canis-majoris', position: '-0.6949 -0.7221 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'zeta-canis-majoris', position: '-0.1013 -1.0023 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'omicron-1-canis-majoris', position: '-0.2178 -0.0811 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'nu-2-canis-majoris', position: '0.3744 -0.0064 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'xi-2-canis-majoris', position: '0.1516 -0.2637 0.01', radius: 0.02, emissive: 0.9 },
+        { name: 'beta-canis-majoris', position: '0.6820 -0.1300 0.01', radius: 0.025, emissive: 1.0 }
+      ],
+      connections: [
+        ['gamma-canis-majoris', 'theta-canis-majoris'],
+        ['gamma-canis-majoris', 'iota-canis-majoris'],
+        ['iota-canis-majoris', 'theta-canis-majoris'],
+        ['alpha-canis-majoris', 'iota-canis-majoris'],
+        ['alpha-canis-majoris', 'omicron-2-canis-majoris'],
+        ['delta-canis-majoris', 'omicron-2-canis-majoris'],
+        ['delta-canis-majoris', 'omega-canis-majoris'],
+        ['eta-canis-majoris', 'omega-canis-majoris'],
+        ['delta-canis-majoris', 'sigma-canis-majoris'],
+        ['nu-2-canis-majoris', 'omicron-1-canis-majoris'],
+        ['nu-2-canis-majoris', 'xi-2-canis-majoris'],
+        ['alpha-canis-majoris', 'nu-2-canis-majoris'],
+        ['beta-canis-majoris', 'nu-2-canis-majoris'],
+        ['epsilon-canis-majoris', 'kappa-canis-majoris'],
+        ['epsilon-canis-majoris', 'zeta-canis-majoris'],
+        ['epsilon-canis-majoris', 'sigma-canis-majoris'],
+        ['omicron-1-canis-majoris', 'sigma-canis-majoris']
+      ]
+    }
+  };
+  
+  // Selected constellation (will be set randomly on initialization)
+  let selectedConstellation = null;
+  let correctConnections = [];
   
   // Helper function to get solar system world position
   function getSolarSystemWorldPosition() {
@@ -515,25 +701,18 @@ function initSolarSystem() {
     };
   }
   
+  // Get image data for a given element
+  function getImageDataForElement(element) {
+    return imageData.find(img => img.element === element) || null;
+  }
+
   // Check if a sphere position is over any image on table-2
   // Returns the element name if over an image, null otherwise
   function getImageAtPosition(spherePosition) {
-    // Image positions relative to table-2 (from HTML)
-    // Images are at: -1.5 (Air), -0.5 (Earth), 0.5 (Fire), 1.5 (Water) on X axis
-    // Z position: -3.9
-    // Width: 0.4 * 2 (scale) = 0.8
-    // Height: 0.306 * 2 (scale) = 0.612
-    const images = [
-      { x: -1.5, z: -3.9, width: 0.8, height: 0.612, element: 'air' },
-      { x: -0.5, z: -3.9, width: 0.8, height: 0.612, element: 'earth' },
-      { x: 0.5, z: -3.9, width: 0.8, height: 0.612, element: 'fire' },
-      { x: 1.5, z: -3.9, width: 0.8, height: 0.612, element: 'water' }
-    ];
-    
     // Check if sphere is within bounds of any image
     // Images are rotated -90 on X and 180 on Y, so they're flat
     // We check X and Z bounds (Y doesn't matter since images are flat)
-    for (const image of images) {
+    for (const image of imageData) {
       const halfWidth = image.width / 2;
       const halfHeight = image.height / 2;
       
@@ -933,48 +1112,15 @@ function initSolarSystem() {
     // Get blackboard position
     const blackboardPos = getBlackboardWorldPosition();
     
-    // Position camera: x = 3, same y and z as blackboard
+    // Position camera: x = 4, same y and z as blackboard
     const blackboardViewPosition = {
-      x: 3, // Camera x position
-      y: 2.5, // Same y as blackboard
-      z: -13.455 // Same z as blackboard
+      x: 4.4, // Camera x position
+      y: 2.887, // Same y as blackboard
+      z: -13.454 // Same z as blackboard
     };
     
-    // Get blackboard entity to calculate rotation immediately
-    const blackboard = document.querySelector('#centaurus-board');
-    const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
-    
-    // Calculate rotation to look at blackboard BEFORE animating
-    let blackboardViewRotation = { x: 0, y: 90, z: 0 }; // Default fallback
-    
-    if (blackboard && blackboard.object3D && THREE) {
-      // Update the blackboard's world matrix to ensure it's current
-      blackboard.object3D.updateMatrixWorld(true);
-      
-      // Calculate a point on the blackboard plane (offset in the blackboard's local space)
-      // The blackboard plane is at (0, 0, 0) in local space
-      // We'll look at a point slightly forward from the blackboard center in its local Z direction
-      // Since blackboard is rotated -90 on Y, local Z points in negative X world direction
-      const blackboardLocalPoint = new THREE.Vector3(0, 0, -1); // 1 unit forward in local Z (toward front of blackboard)
-      const blackboardWorldPoint = blackboardLocalPoint.clone();
-      blackboardWorldPoint.applyMatrix4(blackboard.object3D.matrixWorld);
-      
-      // Now calculate rotation to look at this point from camera position
-      const cameraPos = new THREE.Vector3(blackboardViewPosition.x, blackboardViewPosition.y, blackboardViewPosition.z);
-      const lookDirection = new THREE.Vector3().subVectors(blackboardWorldPoint, cameraPos).normalize();
-      
-      // Calculate rotation from camera's default forward (0, 0, -1) to look direction
-      const cameraForward = new THREE.Vector3(0, 0, -1);
-      const quaternion = new THREE.Quaternion().setFromUnitVectors(cameraForward, lookDirection);
-      const euler = new THREE.Euler().setFromQuaternion(quaternion);
-      
-      // Convert to degrees
-      blackboardViewRotation = {
-        x: THREE.MathUtils.radToDeg(euler.x),
-        y: THREE.MathUtils.radToDeg(euler.y),
-        z: THREE.MathUtils.radToDeg(euler.z)
-      };
-    }
+    // Set fixed rotation for constellation puzzle mode
+    const blackboardViewRotation = { x: 0, y: -90, z: 0 };
     
     // Store rotation for lock-rotation component
     window.blackboardViewRotation = blackboardViewRotation;
@@ -1062,6 +1208,15 @@ function initSolarSystem() {
         draggedPlanet = null;
       }
       if (draggedSphere) {
+        // Check if sphere was snapped to an image and clear isModelOn flag
+        const previousImageElement = sphereToImageElement.get(draggedSphere);
+        if (previousImageElement) {
+          const imgData = getImageDataForElement(previousImageElement);
+          if (imgData) {
+            imgData.isModelOn = false;
+          }
+          sphereToImageElement.delete(draggedSphere);
+        }
         // Return to initial starting position
         const initialPos = sphereInitialPositions.get(draggedSphere);
         if (initialPos) {
@@ -1975,6 +2130,17 @@ function initSolarSystem() {
         draggedPlanet = null;
         isDragging = true;
         
+        // If this sphere was snapped to an image, clear isModelOn for that image
+        const previousImageElement = sphereToImageElement.get(draggedSphere);
+        if (previousImageElement) {
+          const imgData = getImageDataForElement(previousImageElement);
+          if (imgData) {
+            imgData.isModelOn = false;
+          }
+          // Clear tracking - we'll set it again if released back on an image
+          sphereToImageElement.delete(draggedSphere);
+        }
+        
         // Store original position if not already stored
         if (!sphereOriginalPositions.has(draggedSphere)) {
           const pos = draggedSphere.getAttribute('position');
@@ -2141,11 +2307,26 @@ function initSolarSystem() {
       const originalPos = sphereOriginalPositions.get(draggedSphere);
       if (!originalPos) return; // Safety check
       
+      // Check if sphere is over an image - if so, snap x to image x and z to -4.1
+      // But only if the image doesn't already have a model on it
+      const imageElement = getImageAtPosition({ x: localVector.x, y: originalPos.y, z: localVector.z });
+      let finalX = localVector.x;
+      let finalZ = localVector.z;
+      
+      if (imageElement) {
+        const imgData = getImageDataForElement(imageElement);
+        // Only snap if the image doesn't already have a model on it
+        if (imgData && !imgData.isModelOn) {
+          finalX = imgData.x; // Snap x to image x position
+          finalZ = -4.1; // Snap z to -4.1
+        }
+      }
+      
       // Update sphere position (only X and Z, Y stays the same)
       draggedSphere.setAttribute('position', {
-        x: localVector.x,
+        x: finalX,
         y: originalPos.y, // Fixed Y from original position
-        z: localVector.z
+        z: finalZ
       });
       
       event.preventDefault();
@@ -2256,31 +2437,78 @@ function initSolarSystem() {
       const sphereElement = sphereToRelease.getAttribute('data-element');
       
       if (imageElement) {
-        // Sphere is over an image (correct or wrong) - allow it to stay
-        // Update the current position tracking (but keep initial position unchanged)
-        sphereOriginalPositions.set(sphereToRelease, {
-          x: currentPos.x,
-          y: currentPos.y,
-          z: currentPos.z
-        });
+        // Get image data to check if model can be placed
+        const imgData = getImageDataForElement(imageElement);
         
-        // Check if it's the correct image (zodiac symbol element matches image element)
-        if (imageElement === sphereElement) {
-          // Correct match! Zodiac symbol is on its corresponding element image
-          sphereCorrectPlacements[sphereElement] = true;
-          const elementName = sphereElement.charAt(0).toUpperCase() + sphereElement.slice(1);
-          console.log(`Correct zodiac symbol placed on ${elementName} element image`);
-          
-          // Check if all zodiac symbols are correctly placed
-          checkAllSpheresPlaced();
-        } else {
-          // Wrong image - mark this zodiac symbol's element as not correctly placed
+        // Check if image already has a different model on it
+        const existingSphereOnImage = Array.from(sphereToImageElement.entries()).find(
+          ([sphere, element]) => element === imageElement && sphere !== sphereToRelease
+        );
+        
+        if (imgData && existingSphereOnImage) {
+          // Image already has a different model on it, don't allow snapping - return to original position
+          const initialPos = sphereInitialPositions.get(sphereToRelease);
+          if (initialPos) {
+            sphereToRelease.setAttribute('position', {
+              x: initialPos.x,
+              y: initialPos.y,
+              z: initialPos.z
+            });
+            sphereOriginalPositions.set(sphereToRelease, {
+              x: initialPos.x,
+              y: initialPos.y,
+              z: initialPos.z
+            });
+          }
+          // Mark as not correctly placed
           if (sphereElement) {
             sphereCorrectPlacements[sphereElement] = false;
-            console.log(`Zodiac symbol for ${sphereElement} placed on wrong element image (${imageElement})`);
+          }
+        } else if (imgData) {
+          // Image is free (or this sphere was already on it), snap the sphere to the image position
+          const snappedPos = {
+            x: imgData.x, // Snap x to image x position
+            y: currentPos.y, // Keep current y
+            z: -4.1 // Snap z to -4.1
+          };
+          sphereToRelease.setAttribute('position', snappedPos);
+          
+          // Update the current position tracking
+          sphereOriginalPositions.set(sphereToRelease, snappedPos);
+          
+          // Track which image this sphere is snapped to
+          sphereToImageElement.set(sphereToRelease, imageElement);
+          
+          // Sync isModelOn flags
+          syncImageModelStates();
+          
+          // Check if it's the correct image (zodiac symbol element matches image element)
+          if (imageElement === sphereElement) {
+            // Correct match! Zodiac symbol is on its corresponding element image
+            sphereCorrectPlacements[sphereElement] = true;
+            const elementName = sphereElement.charAt(0).toUpperCase() + sphereElement.slice(1);
+            console.log(`Correct zodiac symbol placed on ${elementName} element image`);
+            
+            // Check if all zodiac symbols are correctly placed
+            checkAllSpheresPlaced();
+          } else {
+            // Wrong image - mark this zodiac symbol's element as not correctly placed
+            if (sphereElement) {
+              sphereCorrectPlacements[sphereElement] = false;
+              console.log(`Zodiac symbol for ${sphereElement} placed on wrong element image (${imageElement})`);
+            }
           }
         }
       } else {
+        // Sphere is not over any image - check if it was previously snapped to an image
+        const previousImageElement = sphereToImageElement.get(sphereToRelease);
+        if (previousImageElement) {
+          // Remove from image tracking
+          sphereToImageElement.delete(sphereToRelease);
+          // Sync isModelOn flags
+          syncImageModelStates();
+        }
+        
         // Sphere is not over any image, return to initial starting position
         if (sphereElement) {
           sphereCorrectPlacements[sphereElement] = false; // Mark as not correctly placed
@@ -2326,6 +2554,13 @@ function initSolarSystem() {
     }
     // Handle sphere
     else if (draggedSphere) {
+      // Check if sphere was snapped to an image and clear tracking
+      const previousImageElement = sphereToImageElement.get(draggedSphere);
+      if (previousImageElement) {
+        sphereToImageElement.delete(draggedSphere);
+        // Sync isModelOn flags
+        syncImageModelStates();
+      }
       // Return to initial starting position
       const initialPos = sphereInitialPositions.get(draggedSphere);
       if (initialPos) {
@@ -2408,11 +2643,43 @@ function initSolarSystem() {
       });
     });
     
+    // Debug logging
+    console.log('Checking puzzle completion:');
+    console.log('Total connections made:', constellationConnections.size);
+    console.log('All correct made:', allCorrectMade);
+    console.log('Has incorrect connections:', hasIncorrectConnections);
+    console.log('Current connections:', Array.from(constellationConnections));
+    console.log('Expected connections:', correctConnections.map(conn => normalizeConnection(conn[0], conn[1])));
+    
     // Only log if all correct connections are made AND no incorrect connections exist
     if (allCorrectMade && !hasIncorrectConnections) {
-      console.log('All stars are connected correctly! Big Dipper constellation complete!');
+      const constellationName = selectedConstellation ? selectedConstellation.name : 'Constellation';
+      console.log(`All stars are connected correctly! ${constellationName} constellation complete!`);
       // Mark puzzle as solved
       puzzleState['blackboard'] = true;
+      
+      // Change all dots (stars) to white
+      const allStars = document.querySelectorAll('.constellation-star');
+      allStars.forEach(star => {
+        star.setAttribute('color', '#FFFF00');
+        star.setAttribute('emissive', '#FFFF00');
+      });
+      
+      // Change all lines to white
+      const allLines = document.querySelectorAll('.constellation-line');
+      allLines.forEach(line => {
+        line.setAttribute('color', '#FFFF00');
+      });
+      
+      // Clear selected star state
+      if (firstSelectedStar) {
+        firstSelectedStar = null;
+      }
+      
+      // Clear hover states
+      hoveredStar = null;
+      hoveredLine = null;
+      
       // Animate completed star lamps
       animateCompletedStarLamp('star-lamp-10');
       animateCompletedStarLamp('star-lamp-11');
@@ -2453,21 +2720,36 @@ function initSolarSystem() {
     const linesContainer = document.querySelector('#constellation-lines');
     if (!linesContainer) return;
     
-    // Create line element
+    // Create line element (visual)
     // Use width for the length (extends along x-axis), then rotate around z-axis
     const line = document.createElement('a-box');
     line.setAttribute('position', `${midX} ${midY} ${midZ - 0.005}`);
     line.setAttribute('rotation', `0 0 ${angle}`);
     line.setAttribute('width', distance); // Length of the line
-    line.setAttribute('height', '0.006'); // Thickness
+    line.setAttribute('height', '0.006'); // Thickness (visual)
     line.setAttribute('depth', '0.006'); // Thickness
-    line.setAttribute('color', '#FFFFFF');
+    line.setAttribute('color', '#FFFF00');
     line.setAttribute('opacity', '0.7');
     line.classList.add('constellation-line'); // Add class for easy selection
     line.setAttribute('data-connection', connectionKey); // Store connection key for removal
     
-    // Add to container
+    // Create invisible hitbox for easier clicking (wider in height/y-axis)
+    const hitbox = document.createElement('a-box');
+    hitbox.setAttribute('position', `${midX} ${midY} ${midZ - 0.005}`);
+    hitbox.setAttribute('rotation', `0 0 ${angle}`);
+    hitbox.setAttribute('width', distance); // Same length as visual line
+    hitbox.setAttribute('height', '0.1'); // Much wider for easier clicking
+    hitbox.setAttribute('depth', '0.006'); // Same depth
+    hitbox.setAttribute('visible', 'false'); // Invisible
+    hitbox.classList.add('constellation-line-hitbox');
+    hitbox.setAttribute('data-connection', connectionKey); // Store connection key
+    
+    // Store reference to hitbox on the line element
+    line.hitbox = hitbox;
+    
+    // Add both to container
     linesContainer.appendChild(line);
+    linesContainer.appendChild(hitbox);
     
     return line;
   }
@@ -2480,8 +2762,139 @@ function initSolarSystem() {
       // Check if constellation is now complete after removing a line
       // (in case removing an incorrect line made it perfect)
       checkAllConnectionsComplete();
+      
+      // Also remove the corresponding hitbox
+      const hitbox = Array.from(document.querySelectorAll('.constellation-line-hitbox')).find(
+        h => h.getAttribute('data-connection') === connectionKey
+      );
+      if (hitbox) {
+        hitbox.remove();
+      }
     }
     lineElement.remove();
+  }
+  
+  // Handle constellation hover (for stars and lines)
+  function handleConstellationHover(event) {
+    // Only handle hover when in camera lock mode (blackboard view) and puzzle not solved
+    if ((!isBlackboardView && !window.isBlackboardView) || puzzleState['blackboard']) return;
+    
+    const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
+    if (!THREE) return;
+    
+    const cameraEl = scene.querySelector('a-camera');
+    if (!cameraEl || !cameraEl.object3D) return;
+    
+    const camera = cameraEl.getObject3D('camera');
+    if (!camera) return;
+    
+    // Get renderer from scene
+    const renderer = scene.renderer || (scene.systems && scene.systems.renderer && scene.systems.renderer.renderer);
+    if (!renderer || !renderer.domElement) return;
+    
+    // Initialize mouse if needed
+    if (!mouse) {
+      mouse = new THREE.Vector2();
+    }
+    
+    // Normalize mouse coordinates
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    
+    // Create raycaster
+    if (!raycaster) {
+      raycaster = new THREE.Raycaster();
+    }
+    raycaster.setFromCamera(mouse, camera);
+    
+    // Check for intersection with constellation lines (hitboxes)
+    const hitboxes = document.querySelectorAll('.constellation-line-hitbox');
+    let currentHoveredLine = null;
+    let closestLineDistance = Infinity;
+    
+    hitboxes.forEach(hitbox => {
+      if (hitbox.object3D) {
+        const intersect = raycaster.intersectObject(hitbox.object3D, true);
+        if (intersect.length > 0 && intersect[0].distance < closestLineDistance) {
+          const connectionKey = hitbox.getAttribute('data-connection');
+          const line = Array.from(document.querySelectorAll('.constellation-line')).find(
+            l => l.getAttribute('data-connection') === connectionKey
+          );
+          if (line) {
+            currentHoveredLine = line;
+            closestLineDistance = intersect[0].distance;
+          }
+        }
+      }
+    });
+    
+    // Check for intersection with constellation stars
+    const stars = document.querySelectorAll('.constellation-star');
+    let currentHoveredStar = null;
+    let closestStarDistance = Infinity;
+    
+    stars.forEach(star => {
+      if (star.object3D) {
+        const intersect = raycaster.intersectObject(star.object3D, true);
+        if (intersect.length > 0 && intersect[0].distance < closestStarDistance) {
+          currentHoveredStar = star;
+          closestStarDistance = intersect[0].distance;
+        }
+      }
+    });
+    
+    // Prioritize stars over lines if both are hovered
+    if (currentHoveredStar && currentHoveredLine) {
+      if (closestStarDistance < closestLineDistance) {
+        currentHoveredLine = null;
+      } else {
+        currentHoveredStar = null;
+      }
+    }
+    
+    // Update hovered star
+    if (currentHoveredStar !== hoveredStar) {
+      // Remove hover from previous star (unless it's selected)
+      if (hoveredStar && hoveredStar !== firstSelectedStar) {
+        hoveredStar.setAttribute('color', '#FFFF00');
+        hoveredStar.setAttribute('emissive', '#FFFF00');
+      }
+      
+      // Add hover to new star (unless it's selected)
+      if (currentHoveredStar && currentHoveredStar !== firstSelectedStar) {
+        currentHoveredStar.setAttribute('color', '#00FFFF'); // Cyan
+        currentHoveredStar.setAttribute('emissive', '#00FFFF'); // Cyan
+      }
+      
+      hoveredStar = currentHoveredStar;
+    }
+    
+    // Update hovered line
+    if (currentHoveredLine !== hoveredLine) {
+      // Remove hover from previous line
+      if (hoveredLine) {
+        hoveredLine.setAttribute('color', '#FFFF00');
+      }
+      
+      // Add hover to new line
+      if (currentHoveredLine) {
+        currentHoveredLine.setAttribute('color', '#00FFFF'); // Cyan
+      }
+      
+      hoveredLine = currentHoveredLine;
+    }
+    
+    // Clear hover states if nothing is hovered
+    if (!currentHoveredStar && hoveredStar && hoveredStar !== firstSelectedStar) {
+      hoveredStar.setAttribute('color', '#FFFF00');
+      hoveredStar.setAttribute('emissive', '#FFFF00');
+      hoveredStar = null;
+    }
+    if (!currentHoveredLine && hoveredLine) {
+      hoveredLine.setAttribute('color', '#FFFF00');
+      hoveredLine = null;
+    }
   }
   
   // Handle constellation star click
@@ -2525,35 +2938,140 @@ function initSolarSystem() {
     raycaster.setFromCamera(mouse, camera);
     
     // First check for intersection with constellation lines (to remove them)
-    const lines = document.querySelectorAll('.constellation-line');
+    // Use hitboxes for easier clicking (wider hit area)
+    const hitboxes = document.querySelectorAll('.constellation-line-hitbox');
     const lineIntersects = [];
     
-    lines.forEach(line => {
-      if (line.object3D) {
-        const intersect = raycaster.intersectObject(line.object3D, true);
+    hitboxes.forEach(hitbox => {
+      if (hitbox.object3D) {
+        const intersect = raycaster.intersectObject(hitbox.object3D, true);
         if (intersect.length > 0) {
-          lineIntersects.push({ element: line, distance: intersect[0].distance });
+          // Find the corresponding visual line element
+          const connectionKey = hitbox.getAttribute('data-connection');
+          const line = Array.from(document.querySelectorAll('.constellation-line')).find(
+            l => l.getAttribute('data-connection') === connectionKey
+          );
+          if (line) {
+            lineIntersects.push({ 
+              element: line, 
+              distance: intersect[0].distance,
+              point: intersect[0].point // Store the intersection point
+            });
+          }
         }
       }
     });
     
-    // If a line is clicked, remove it
+    // If a line is clicked, check if it's near an endpoint before removing
     if (lineIntersects.length > 0) {
       // Find closest line
       lineIntersects.sort((a, b) => a.distance - b.distance);
       const clickedLine = lineIntersects[0].element;
-      removeConstellationLine(clickedLine);
-      console.log('Line removed');
+      const intersectionPoint = lineIntersects[0].point;
       
-      // If a star was selected, deselect it
-      if (firstSelectedStar) {
-        firstSelectedStar.setAttribute('color', '#FFFFFF');
-        firstSelectedStar.setAttribute('emissive', '#FFFFFF');
-        firstSelectedStar = null;
+      // Get the connection key and parse star IDs
+      const connectionKey = clickedLine.getAttribute('data-connection');
+      if (connectionKey) {
+        const [star1Id, star2Id] = connectionKey.split('-');
+        
+        // Find the star elements
+        const allStars = document.querySelectorAll('.constellation-star');
+        let star1 = null;
+        let star2 = null;
+        
+        allStars.forEach(star => {
+          const starId = star.getAttribute('data-star');
+          if (starId === star1Id) star1 = star;
+          if (starId === star2Id) star2 = star;
+        });
+        
+        // If we found both stars, check if click is near endpoints
+        if (star1 && star2) {
+          // Get world positions of both stars
+          const star1Pos = new THREE.Vector3();
+          const star2Pos = new THREE.Vector3();
+          star1.object3D.getWorldPosition(star1Pos);
+          star2.object3D.getWorldPosition(star2Pos);
+          
+          // Calculate line length
+          const lineLength = star1Pos.distanceTo(star2Pos);
+          const threshold = lineLength * 0.1; // 10% of line length
+          
+          // Calculate distance from intersection point to each endpoint
+          const distToStar1 = intersectionPoint.distanceTo(star1Pos);
+          const distToStar2 = intersectionPoint.distanceTo(star2Pos);
+          
+          // If click is within 10% of either endpoint, don't remove
+          if (distToStar1 <= threshold || distToStar2 <= threshold) {
+            console.log('Click too close to endpoint, line not removed');
+            // Continue to check for star clicks instead
+          } else {
+            // Click is not near endpoints, but only remove if line is hovered (cyan)
+            if (hoveredLine === clickedLine) {
+              // Clear hover state for clicked line
+              hoveredLine = null;
+              removeConstellationLine(clickedLine);
+              console.log('Line removed');
+              
+              // If a star was selected, deselect it
+              if (firstSelectedStar) {
+                firstSelectedStar.setAttribute('color', '#FFFF00');
+                firstSelectedStar.setAttribute('emissive', '#FFFF00');
+                firstSelectedStar = null;
+              }
+              
+              event.preventDefault();
+              return;
+            } else {
+              // Line is not hovered, don't remove it
+              console.log('Line not hovered, not removed');
+              // Continue to check for star clicks instead
+            }
+          }
+        } else {
+          // Couldn't find stars, but only remove if line is hovered (cyan)
+          if (hoveredLine === clickedLine) {
+            // Clear hover state for clicked line
+            hoveredLine = null;
+            removeConstellationLine(clickedLine);
+            console.log('Line removed (stars not found)');
+            
+            if (firstSelectedStar) {
+              firstSelectedStar.setAttribute('color', '#FFFF00');
+              firstSelectedStar.setAttribute('emissive', '#FFFF00');
+              firstSelectedStar = null;
+            }
+            
+            event.preventDefault();
+            return;
+          } else {
+            // Line is not hovered, don't remove it
+            console.log('Line not hovered, not removed');
+            // Continue to check for star clicks instead
+          }
+        }
+      } else {
+        // No connection key, but only remove if line is hovered (cyan)
+        if (hoveredLine === clickedLine) {
+          // Clear hover state for clicked line
+          hoveredLine = null;
+          removeConstellationLine(clickedLine);
+          console.log('Line removed (no connection key)');
+          
+          if (firstSelectedStar) {
+            firstSelectedStar.setAttribute('color', '#FFFF00');
+            firstSelectedStar.setAttribute('emissive', '#FFFF00');
+            firstSelectedStar = null;
+          }
+          
+          event.preventDefault();
+          return;
+        } else {
+          // Line is not hovered, don't remove it
+          console.log('Line not hovered, not removed');
+          // Continue to check for star clicks instead
+        }
       }
-      
-      event.preventDefault();
-      return;
     }
     
     // Check for intersection with constellation stars
@@ -2575,18 +3093,23 @@ function initSolarSystem() {
       const clickedStar = intersects[0].element;
       const starId = clickedStar.getAttribute('data-star');
       
+      // Clear hover state for clicked star
+      if (hoveredStar === clickedStar) {
+        hoveredStar = null;
+      }
+      
       if (!firstSelectedStar) {
-        // First star clicked - store it and turn yellow
+        // First star clicked - store it and turn red
         firstSelectedStar = clickedStar;
-        clickedStar.setAttribute('color', '#FFFF00'); // Yellow highlight
-        clickedStar.setAttribute('emissive', '#FFFF00'); // Yellow emissive
+        clickedStar.setAttribute('color', '#FF0000'); // Red
+        clickedStar.setAttribute('emissive', '#FF0000'); // Red emissive
         console.log('First star selected:', starId);
       } else {
         // Second star clicked
         if (firstSelectedStar === clickedStar) {
           // Same star clicked - deselect and turn back to white
-          firstSelectedStar.setAttribute('color', '#FFFFFF'); // Reset to white
-          firstSelectedStar.setAttribute('emissive', '#FFFFFF'); // Reset emissive
+          firstSelectedStar.setAttribute('color', '#FFFF00'); // Reset to yellow
+          firstSelectedStar.setAttribute('emissive', '#FFFF00'); // Reset emissive
           firstSelectedStar = null;
           console.log('Star deselected');
         } else {
@@ -2614,8 +3137,8 @@ function initSolarSystem() {
           }
           
           // Reset first star back to white after connection is made
-          firstSelectedStar.setAttribute('color', '#FFFFFF'); // Reset to white
-          firstSelectedStar.setAttribute('emissive', '#FFFFFF'); // Reset emissive
+          firstSelectedStar.setAttribute('color', '#FFFF00'); // Reset to yellow
+          firstSelectedStar.setAttribute('emissive', '#FFFF00'); // Reset emissive
           firstSelectedStar = null;
         }
       }
@@ -2624,10 +3147,57 @@ function initSolarSystem() {
     }
   }
   
+  // Randomly select a constellation
+  function selectRandomConstellation() {
+    const constellationKeys = Object.keys(constellations);
+    const randomIndex = Math.floor(Math.random() * constellationKeys.length);
+    const selectedKey = constellationKeys[randomIndex];
+    selectedConstellation = constellations[selectedKey];
+    correctConnections = selectedConstellation.connections;
+    console.log(`Randomly selected constellation: ${selectedConstellation.name}`);
+    return selectedConstellation;
+  }
+  
+  // Create stars dynamically based on selected constellation
+  function createConstellationStars() {
+    const board = document.querySelector('#centaurus-board');
+    if (!board) {
+      console.error('Constellation board not found');
+      return;
+    }
+    
+    // Remove existing stars
+    const existingStars = board.querySelectorAll('.constellation-star');
+    existingStars.forEach(star => star.remove());
+    
+    // Create stars for selected constellation
+    selectedConstellation.stars.forEach(starData => {
+      const star = document.createElement('a-sphere');
+      star.setAttribute('class', 'constellation-star');
+      star.setAttribute('data-star', starData.name);
+      star.setAttribute('position', starData.position);
+      star.setAttribute('radius', starData.radius);
+      star.setAttribute('color', '#FFFF00');
+      star.setAttribute('emissive', '#FFFF00');
+      star.setAttribute('emissive-intensity', starData.emissive);
+      board.appendChild(star);
+    });
+    
+    console.log(`Created ${selectedConstellation.stars.length} stars for ${selectedConstellation.name}`);
+  }
+  
   // Initialize constellation game
   function initConstellationGame() {
+    // Randomly select a constellation
+    selectRandomConstellation();
+    
+    // Create stars dynamically
+    createConstellationStars();
+    
     // Add click event listener for constellation stars
     window.addEventListener('mousedown', handleConstellationStarClick);
+    // Add hover event listener for constellation stars and lines
+    window.addEventListener('mousemove', handleConstellationHover);
     console.log('Constellation game initialized');
   }
   
@@ -2649,6 +3219,26 @@ function initSolarSystem() {
       console.warn('Failed to load star background image for aspect ratio calculation');
     };
     img.src = 'data/star_constellations/star_background.jpg';
+  }
+  
+  // Set correct aspect ratio for constellation drawing puzzle background
+  function setConstellationDrawingBackgroundAspectRatio() {
+    const backgroundImage = document.getElementById('constellation-drawing-background');
+    if (!backgroundImage) return;
+    
+    const img = new Image();
+    img.onload = function() {
+      const aspectRatio = img.width / img.height;
+      const width = 4.5; // Keep width at 4.5 (same as original plane)
+      const height = width / aspectRatio; // Calculate height based on aspect ratio
+      
+      backgroundImage.setAttribute('height', height);
+      console.log(`Constellation drawing background aspect ratio set: ${width} x ${height} (ratio: ${aspectRatio.toFixed(2)})`);
+    };
+    img.onerror = function() {
+      console.warn('Failed to load constellation drawing background image for aspect ratio calculation');
+    };
+    img.src = 'data/star_constellations/Southern Star Background.jpg';
   }
   
   // Constellation folder to star images mapping
@@ -3172,6 +3762,7 @@ function initSolarSystem() {
       initDragAndDrop();
       initConstellationGame();
       setStarBackgroundAspectRatio();
+      setConstellationDrawingBackgroundAspectRatio();
       createConstellationImages();
       loadAllModels();
       // Don't start animation automatically - wait for all planets to be correctly placed
@@ -3196,6 +3787,7 @@ function initSolarSystem() {
       initDragAndDrop();
       initConstellationGame();
       setStarBackgroundAspectRatio();
+      setConstellationDrawingBackgroundAspectRatio();
       createConstellationImages();
       loadAllModels();
       // Don't start animation automatically - wait for all planets to be correctly placed

@@ -42,34 +42,12 @@
     <!-- Right Wall -->
     <a-plane position="6.54 2.5 -13.455" rotation="0 -90 0" width="13.08" height="5" material="src: data/textures/carpet/Carpet_Color (Dark).jpg; normalMap: data/textures/carpet/Carpet012_2K-JPG_NormalGL.jpg; aoMap: data/textures/carpet/Carpet012_2K-JPG_AmbientOcclusion.jpg; roughnessMap: data/textures/carpet/Carpet012_2K-JPG_Roughness.jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5; side: double"></a-plane>
     
-    <!-- Big Dipper Constellation Blackboard on Right Wall -->
-    <a-entity id="centaurus-board" position="6.53 2.5 -13.455" rotation="0 -90 0">
+    <!-- Constellation Blackboard on Right Wall (stars will be created dynamically) -->
+    <a-entity id="centaurus-board" position="6.53 2.887 -13.455" rotation="0 -90 0" scale="0.776 0.776 0.776">
       <!-- Blackboard -->
-      <a-plane position="0 0 0" width="4.5" height="3.5" color="#000000" material="roughness: 0.8; side: double"></a-plane>
+      <a-image id="constellation-drawing-background" position="0 0.018 0" width="4.5" height="3.5" scale="1.797 1.797 1.797" src="data/star_constellations/Southern Star Background.jpg" material="roughness: 0.8; side: double"></a-image>
       
-      <!-- Big Dipper Constellation Stars -->
-      <!-- Bowl of the Dipper (4 stars) -->
-      <!-- Dubhe (Alpha Ursae Majoris) - top right of bowl, brightest -->
-      <a-sphere class="constellation-star" data-star="dubhe" position="0.8 0.8 0.01" radius="0.04" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="1.0"></a-sphere>
-      
-      <!-- Merak (Beta Ursae Majoris) - bottom right of bowl -->
-      <a-sphere class="constellation-star" data-star="merak" position="0.6 0.2 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
-      
-      <!-- Phecda (Gamma Ursae Majoris) - bottom left of bowl -->
-      <a-sphere class="constellation-star" data-star="phecda" position="-0.2 0.1 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
-      
-      <!-- Megrez (Delta Ursae Majoris) - top left of bowl -->
-      <a-sphere class="constellation-star" data-star="megrez" position="0.0 0.7 0.01" radius="0.03" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.8"></a-sphere>
-      
-      <!-- Handle of the Dipper (3 stars) -->
-      <!-- Alioth (Epsilon Ursae Majoris) - first in handle -->
-      <a-sphere class="constellation-star" data-star="alioth" position="-0.4 0.5 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
-      
-      <!-- Mizar (Zeta Ursae Majoris) - middle of handle -->
-      <a-sphere class="constellation-star" data-star="mizar" position="-0.8 0.3 0.01" radius="0.03" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.8"></a-sphere>
-      
-      <!-- Alkaid (Eta Ursae Majoris) - end of handle -->
-      <a-sphere class="constellation-star" data-star="alkaid" position="-1.2 0.1 0.01" radius="0.035" color="#FFFFFF" emissive="#FFFFFF" emissive-intensity="0.9"></a-sphere>
+      <!-- Stars will be created dynamically by JavaScript -->
       
       <!-- Container for dynamically created connection lines -->
       <a-entity id="constellation-lines"></a-entity>
