@@ -728,6 +728,22 @@ function initSolarSystem() {
     return null;
   }
   
+  // Sync isModelOn flags in imageData based on sphereToImageElement map
+  function syncImageModelStates() {
+    // First, reset all isModelOn flags to false
+    for (const imgData of imageData) {
+      imgData.isModelOn = false;
+    }
+    
+    // Then, set isModelOn to true for images that have spheres snapped to them
+    for (const [sphere, imageElement] of sphereToImageElement.entries()) {
+      const imgData = getImageDataForElement(imageElement);
+      if (imgData) {
+        imgData.isModelOn = true;
+      }
+    }
+  }
+  
   // Check if all zodiac symbols are correctly placed
   function checkAllSpheresPlaced() {
     const allPlaced = Object.values(sphereCorrectPlacements).every(placed => placed === true);
