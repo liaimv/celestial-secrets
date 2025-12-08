@@ -31,6 +31,29 @@ AFRAME.registerComponent('lock-rotation', {
   }
 });
 
+// Component to update case animation mixer
+AFRAME.registerComponent('case-animation-updater', {
+  tick: function(time, timeDelta) {
+    if (this.el.mixer && this.el.animationAction && !this.el.animationAction.paused) {
+      const delta = timeDelta / 1000; // Convert to seconds
+      this.el.mixer.update(delta);
+      
+      // Stop when we reach half duration
+      if (this.el.mixer.time >= this.el.animationHalfDuration) {
+        this.el.mixer.time = this.el.animationHalfDuration;
+        this.el.animationAction.paused = true;
+        // Update caseIsOpen via the update function
+        if (window.updateCaseIsOpen) {
+          window.updateCaseIsOpen(true);
+        }
+        console.log('Case animation stopped at halfway point, caseIsOpen set to true');
+        // Remove component after stopping
+        this.el.removeAttribute('case-animation-updater');
+      }
+    }
+  }
+});
+
 function initSolarSystem() {
   const scene = document.querySelector('a-scene');
   
@@ -272,11 +295,29 @@ function initSolarSystem() {
   let isNearTable2 = false;
   let isNearBlackboard = false;
   let isNearStarBackground = false;
-  let currentTable = null; // Track which table we're near ('solar-system', 'table-2', 'blackboard', or 'star-background')
+  let isNearDoor = false;
+  let isNearCase = false;
+  let currentTable = null; // Track which table we're near ('solar-system', 'table-2', 'blackboard', 'star-background', 'door', or 'case')
   const PROXIMITY_THRESHOLD = 4; // Distance threshold to show UI
   
-  // ESC UI state
-  let escUI = null;
+  // Door/Key/Case state
+  let hasKey = false;
+  let caseIsOpen = false;
+  let doorEntity = null;
+  let caseEntity = null;
+  let keyEntity = null;
+  
+  // Make caseIsOpen accessible to components via update function
+  window.updateCaseIsOpen = function(value) {
+    caseIsOpen = value;
+    console.log('caseIsOpen updated to:', value);
+    // Force proximity check update after case opens
+    if (value === true) {
+      setTimeout(() => {
+        checkProximity();
+      }, 100);
+    }
+  };
   
   // Completion message UI state
   let completionMessageUI = null;
@@ -417,8 +458,8 @@ function initSolarSystem() {
       animateCompletedStarLamp('star-lamp-7');
       // Turn on star lamps for next puzzle (star background)
       updateStarLampsForPuzzle('star-background');
-      // Show completion message
-      showCompletionMessage('Elements');
+      // Auto-exit puzzle mode immediately
+      switchToOriginalView();
     }
     return allPlaced;
   }
@@ -455,8 +496,10 @@ function initSolarSystem() {
         animateCompletedStarLamp('star-lamp-6');
         // Turn on star lamps for next puzzle (constellation drawing)
         updateStarLampsForPuzzle('blackboard');
-        // Show completion message
-        showCompletionMessage('Solar System');
+        // Auto-exit puzzle mode
+        setTimeout(() => {
+          switchToOriginalView();
+        }, 500);
       }
     } else {
       allPlanetsCorrect = false;
@@ -685,15 +728,6 @@ function initSolarSystem() {
       }
     }
     
-    // Show ESC UI in top-down view
-    if (escUI) {
-      if (escUI.tagName && escUI.tagName.toLowerCase() === 'a-entity') {
-        escUI.setAttribute('visible', 'true');
-      } else {
-        escUI.classList.remove('hidden');
-      }
-    }
-    
     // Hide completion message when switching views
     hideCompletionMessage();
     
@@ -778,14 +812,6 @@ function initSolarSystem() {
       }
     }
     
-    // Show ESC UI in star background view
-    if (escUI) {
-      if (escUI.tagName && escUI.tagName.toLowerCase() === 'a-entity') {
-        escUI.setAttribute('visible', 'true');
-      } else {
-        escUI.classList.remove('hidden');
-      }
-    }
     
     // Hide completion message when switching views
     hideCompletionMessage();
@@ -902,15 +928,6 @@ function initSolarSystem() {
         proximityUI.setAttribute('visible', 'false');
       } else {
         proximityUI.classList.add('hidden');
-      }
-    }
-    
-    // Show ESC UI in blackboard view
-    if (escUI) {
-      if (escUI.tagName && escUI.tagName.toLowerCase() === 'a-entity') {
-        escUI.setAttribute('visible', 'true');
-      } else {
-        escUI.classList.remove('hidden');
       }
     }
     
@@ -1105,14 +1122,6 @@ function initSolarSystem() {
       }
     }
     
-    // Hide ESC UI when switching back to original view
-    if (escUI) {
-      if (escUI.tagName && escUI.tagName.toLowerCase() === 'a-entity') {
-        escUI.setAttribute('visible', 'false');
-      } else {
-        escUI.classList.add('hidden');
-      }
-    }
     
     // Hide completion message when switching back to original view
     hideCompletionMessage();
@@ -1124,7 +1133,41 @@ function initSolarSystem() {
   function handleKeyPress(e) {
     // Check if E key is pressed
     if (e.key === 'e' || e.key === 'E') {
-      console.log('E key pressed - isNearSolarSystem:', isNearSolarSystem, 'isNearTable2:', isNearTable2, 'isNearBlackboard:', isNearBlackboard, 'isNearStarBackground:', isNearStarBackground, 'currentTable:', currentTable, 'isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView, 'isStarBackgroundView:', isStarBackgroundView);
+      console.log('E key pressed - isNearSolarSystem:', isNearSolarSystem, 'isNearTable2:', isNearTable2, 'isNearBlackboard:', isNearBlackboard, 'isNearStarBackground:', isNearStarBackground, 'isNearDoor:', isNearDoor, 'isNearCase:', isNearCase, 'hasKey:', hasKey, 'currentTable:', currentTable, 'isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView, 'isStarBackgroundView:', isStarBackgroundView);
+      
+      // Check for door/case interactions first (only when not in special views)
+      if (!isTopDownView && !isBlackboardView && !isStarBackgroundView) {
+        // Check if near door
+        if (isNearDoor && currentTable === 'door') {
+          if (hasKey) {
+            // Player has key, unlock door and fade to black
+            fadeToBlack();
+          } else {
+            // Player doesn't have key, show message
+            showTemporaryMessage('Key needed to unlock door');
+          }
+          return;
+        }
+        
+        // Check if near case and case is open
+        if (isNearCase && currentTable === 'case' && caseIsOpen && !hasKey) {
+          // Pick up key
+          if (keyEntity) {
+            keyEntity.setAttribute('visible', 'false');
+            hasKey = true;
+            console.log('Key picked up');
+            // Hide proximity UI
+            if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
+              proximityUI.setAttribute('visible', 'false');
+            } else {
+              proximityUI.classList.add('hidden');
+            }
+            currentTable = null;
+          }
+          return;
+        }
+      }
+      
       // Check if in any special view (top-down, blackboard, or star background)
       if (isTopDownView || isBlackboardView || isStarBackgroundView) {
         switchToOriginalView();
@@ -1214,15 +1257,6 @@ function initSolarSystem() {
         }
       }
     }
-    // Check if Q key is pressed (alone, not with other keys)
-    if (e.key === 'q' || e.key === 'Q') {
-      console.log('Q key pressed - isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView, 'isStarBackgroundView:', isStarBackgroundView);
-      // Only switch back if in top-down view, blackboard view, or star background view
-      if (isTopDownView || isBlackboardView || isStarBackgroundView) {
-        switchToOriginalView();
-        e.preventDefault(); // Prevent default browser behavior
-      }
-    }
   }
   
   // Attach global event listeners
@@ -1266,43 +1300,6 @@ function initSolarSystem() {
     checkProximity();
   }
   
-  // Initialize ESC UI
-  function initESCUI() {
-    // Try A-Frame entity first (works in fullscreen)
-    escUI = document.getElementById('esc-ui-entity');
-    if (escUI) {
-      console.log('Using A-Frame entity for ESC UI');
-      return;
-    }
-    
-    // Fallback to HTML element
-    escUI = document.getElementById('esc-ui');
-    if (!escUI) {
-      console.warn('ESC UI element not found - will retry');
-      // Retry after a short delay in case DOM isn't ready
-      setTimeout(() => {
-        initESCUI();
-      }, 200);
-      return;
-    }
-    
-    // Ensure UI is always on top - move to end of body if needed
-    if (escUI.parentNode !== document.body) {
-      document.body.appendChild(escUI);
-    }
-    
-    // Force display style to ensure it's visible
-    escUI.style.display = 'block';
-    escUI.style.visibility = 'visible';
-    
-    // Initially hide the ESC UI (only show in top-down view)
-    if (escUI.tagName && escUI.tagName.toLowerCase() === 'a-entity') {
-      escUI.setAttribute('visible', 'false');
-    } else {
-      escUI.classList.add('hidden');
-    }
-  }
-  
   // Initialize Completion Message UI
   function initCompletionMessageUI() {
     // Try A-Frame entity first (works in fullscreen)
@@ -1322,38 +1319,11 @@ function initSolarSystem() {
     }, 200);
   }
   
-  // Show completion message
+  // Show completion message (now removed - puzzles auto-exit instead)
   function showCompletionMessage(puzzleName) {
-    // Only show in camera lock mode (top-down view, blackboard view, or star background view)
-    if (!isTopDownView && !isBlackboardView && !isStarBackgroundView) {
-      return;
-    }
-    
-    if (!completionMessageUI || !completionText) {
-      // Try to initialize if not already done
-      initCompletionMessageUI();
-      if (!completionMessageUI || !completionText) {
-        console.warn('Completion message UI not available');
-        return;
-      }
-    }
-    
-    // Set the message text
-    const message = `${puzzleName} complete!`;
-    completionText.setAttribute('value', message);
-    
-    // Show the message
-    completionMessageUI.setAttribute('visible', 'true');
-    
-    // Hide after 3 seconds
-    if (completionMessageTimeout) {
-      clearTimeout(completionMessageTimeout);
-    }
-    completionMessageTimeout = setTimeout(() => {
-      if (completionMessageUI) {
-        completionMessageUI.setAttribute('visible', 'false');
-      }
-    }, 3000);
+    // Don't show completion messages - puzzles will auto-exit instead
+    // This function is kept for compatibility but does nothing
+    return;
   }
   
   // Hide completion message
@@ -1364,6 +1334,86 @@ function initSolarSystem() {
     if (completionMessageTimeout) {
       clearTimeout(completionMessageTimeout);
       completionMessageTimeout = null;
+    }
+  }
+  
+  // Show temporary message (similar to completion message but for general messages)
+  function showTemporaryMessage(message) {
+    if (!completionMessageUI || !completionText) {
+      // Try to initialize if not already done
+      initCompletionMessageUI();
+      if (!completionMessageUI || !completionText) {
+        console.warn('Completion message UI not available');
+        return;
+      }
+    }
+    
+    // Set the message text
+    completionText.setAttribute('value', message);
+    
+    // Show the message
+    completionMessageUI.setAttribute('visible', 'true');
+    
+    // Hide after 2 seconds
+    if (completionMessageTimeout) {
+      clearTimeout(completionMessageTimeout);
+    }
+    completionMessageTimeout = setTimeout(() => {
+      if (completionMessageUI) {
+        completionMessageUI.setAttribute('visible', 'false');
+      }
+    }, 2000);
+  }
+  
+  // Fade screen to black using CSS overlay
+  function fadeToBlack() {
+    // Get or create fade overlay div
+    let fadeOverlay = document.getElementById('fade-overlay');
+    if (!fadeOverlay) {
+      // Create fade overlay div
+      fadeOverlay = document.createElement('div');
+      fadeOverlay.setAttribute('id', 'fade-overlay');
+      document.body.appendChild(fadeOverlay);
+    }
+    
+    // Reset opacity to 0
+    fadeOverlay.style.opacity = '0';
+    
+    // Trigger fade by setting opacity to 1 (CSS transition will handle the animation)
+    // Use requestAnimationFrame to ensure the reset is applied first
+    requestAnimationFrame(() => {
+      fadeOverlay.style.opacity = '1';
+    });
+    
+    console.log('Fading to black...');
+  }
+  
+  // Update proximity UI text based on what player is near
+  function updateProximityUIText() {
+    if (!proximityUI) return;
+    
+    let textValue = 'Solve Puzzle'; // Default text
+    
+    if (isNearDoor) {
+      textValue = 'Unlock Door';
+    } else if (isNearCase) {
+      textValue = 'Take Key';
+    } else if (currentTable === 'solar-system' || currentTable === 'table-2' || currentTable === 'blackboard' || currentTable === 'star-background') {
+      textValue = 'Solve Puzzle';
+    }
+    
+    // Update the text element in proximity-ui-entity
+    if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
+      const textElement = proximityUI.querySelector('a-text[position="0.245 -0.28 -0.48"]');
+      if (textElement) {
+        textElement.setAttribute('value', textValue);
+      }
+    } else {
+      // For HTML-based UI
+      const textSpan = proximityUI.querySelector('.proximity-text');
+      if (textSpan) {
+        textSpan.textContent = textValue;
+      }
     }
   }
   
@@ -1420,25 +1470,47 @@ function initSolarSystem() {
     const dz4 = cameraWorldPos.z - starBackgroundPos.z;
     const distanceToStarBackground = Math.sqrt(dx4 * dx4 + dy4 * dy4 + dz4 * dz4);
     
+    // Check distance to door
+    const doorPos = { x: 4.958, y: 2.065, z: -19.998 };
+    const dx5 = cameraWorldPos.x - doorPos.x;
+    const dy5 = cameraWorldPos.y - doorPos.y;
+    const dz5 = cameraWorldPos.z - doorPos.z;
+    const distanceToDoor = Math.sqrt(dx5 * dx5 + dy5 * dy5 + dz5 * dz5);
+    
+    // Check distance to key (for "Take Key" UI)
+    const keyPos = { x: -5.983, y: 1.789, z: -13.445 };
+    const dx6 = cameraWorldPos.x - keyPos.x;
+    const dy6 = cameraWorldPos.y - keyPos.y;
+    const dz6 = cameraWorldPos.z - keyPos.z;
+    const distanceToKey = Math.sqrt(dx6 * dx6 + dy6 * dy6 + dz6 * dz6);
+    
     // Determine which is closer and within threshold
     const nearSolarSystem = distanceToSolarSystem <= PROXIMITY_THRESHOLD;
     const nearTable2 = distanceToTable2 <= PROXIMITY_THRESHOLD;
     const nearBlackboard = distanceToBlackboard <= PROXIMITY_THRESHOLD;
     const nearStarBackground = distanceToStarBackground <= PROXIMITY_THRESHOLD;
+    const nearDoor = distanceToDoor <= PROXIMITY_THRESHOLD;
+    // Key proximity uses threshold of 0.2 and only shows if case is open and key not taken
+    const KEY_PROXIMITY_THRESHOLD = 2;
+    const nearCase = distanceToKey <= KEY_PROXIMITY_THRESHOLD && caseIsOpen && !hasKey; // Only show if case is open and key not taken
     
-    // Update state
-    const wasNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground;
+    // Update state - calculate wasNearAny BEFORE updating state variables
+    const wasNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground || isNearDoor || isNearCase;
     isNearSolarSystem = nearSolarSystem;
     isNearTable2 = nearTable2;
     isNearBlackboard = nearBlackboard;
     isNearStarBackground = nearStarBackground;
+    isNearDoor = nearDoor;
+    isNearCase = nearCase;
     
-    // Determine current table/blackboard/star background (prioritize closest if multiple are near)
+    // Determine current table/blackboard/star background/door/case (prioritize closest if multiple are near)
     const distances = [];
     if (nearSolarSystem) distances.push({ type: 'solar-system', distance: distanceToSolarSystem });
     if (nearTable2) distances.push({ type: 'table-2', distance: distanceToTable2 });
     if (nearBlackboard) distances.push({ type: 'blackboard', distance: distanceToBlackboard });
     if (nearStarBackground) distances.push({ type: 'star-background', distance: distanceToStarBackground });
+    if (nearDoor) distances.push({ type: 'door', distance: distanceToDoor });
+    if (nearCase) distances.push({ type: 'case', distance: distanceToKey });
     
     if (distances.length > 0) {
       distances.sort((a, b) => a.distance - b.distance);
@@ -1448,27 +1520,33 @@ function initSolarSystem() {
     }
     
     // Show/hide UI based on proximity (but not in top-down view, blackboard view, or star background view)
-    const isNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground;
+    const isNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground || isNearDoor || isNearCase;
     const nextAvailablePuzzle = getNextAvailablePuzzle();
     const isCurrentPuzzleAvailable = currentTable === nextAvailablePuzzle && !puzzleState[currentTable];
     
-    if (isNearAny && !wasNearAny && !isTopDownView && !isBlackboardView && !isStarBackgroundView && isCurrentPuzzleAvailable) {
-      // Just entered proximity (only show if not in top-down view and this is the next available puzzle)
+    // Update UI text based on what we're near
+    updateProximityUIText();
+    
+    // Show UI for door always, case when open, and puzzles only if they're available
+    // Note: isNearCase already includes caseIsOpen check, so we just need isNearCase
+    const shouldShowUI = isNearDoor || isNearCase || ((isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground) && isCurrentPuzzleAvailable);
+    
+    // Show/hide UI based on current state (not just on entry/exit)
+    if (shouldShowUI && !isTopDownView && !isBlackboardView && !isStarBackgroundView) {
+      // Show UI if we should show it and not in special views - always update visibility
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'true');
-        console.log('Proximity UI shown (near:', currentTable, ')');
       } else {
         proximityUI.classList.remove('hidden');
-        console.log('Proximity UI shown (near:', currentTable, ')');
       }
-    } else if ((!isNearAny && wasNearAny) || isTopDownView || isBlackboardView || isStarBackgroundView || !isCurrentPuzzleAvailable) {
-      // Just left proximity, or in top-down view, blackboard view, or star background view, or puzzle not available - hide proximity UI
+    } else {
+      // Hide UI if we shouldn't show it or in special views
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'false');
       } else {
         proximityUI.classList.add('hidden');
       }
-      if (!isNearAny) {
+      if (!shouldShowUI) {
         currentTable = null;
       }
     }
@@ -1588,8 +1666,8 @@ function initSolarSystem() {
   
   // Handle mouse down - start dragging or handle Greek input controls
   function handleMouseDown(event) {
-    // Check for Greek input controls first (only in star background view)
-    if (isStarBackgroundView || window.isStarBackgroundView) {
+    // Check for Greek input controls first (only in star background view and if puzzle not solved)
+    if ((isStarBackgroundView || window.isStarBackgroundView) && !puzzleState['star-background']) {
       // Only handle left mouse button
       if (event.button !== 0) return;
       
@@ -1774,8 +1852,8 @@ function initSolarSystem() {
       }
     }
     
-    // Check for intersection with spheres (if viewing table-2 in top-down view)
-    if (topDownViewTableId === 'table-2' || (!topDownViewTableId && (currentTable === 'table-2' || !currentTable))) {
+    // Check for intersection with spheres (if viewing table-2 in top-down view and puzzle not solved)
+    if ((topDownViewTableId === 'table-2' || (!topDownViewTableId && (currentTable === 'table-2' || !currentTable))) && !puzzleState['table-2']) {
       const spheres = document.querySelectorAll('[data-sphere]');
       const intersects = [];
       
@@ -1849,33 +1927,42 @@ function initSolarSystem() {
               }
               raycaster.setFromCamera(mouse, camera);
               
-              // Check for intersection with arrows
-              const arrows = document.querySelectorAll('.greek-arrow-up, .greek-arrow-down');
-              const arrowIntersects = [];
-              
-              arrows.forEach(arrow => {
-                if (arrow.object3D) {
-                  const intersect = raycaster.intersectObject(arrow.object3D, true);
-                  if (intersect.length > 0) {
-                    arrowIntersects.push({ element: arrow, distance: intersect[0].distance });
-                  }
-                }
-              });
-              
-              // Reset previously hovered arrow to black
-              if (hoveredArrow && hoveredArrow !== null) {
-                hoveredArrow.setAttribute('color', '#000000');
-                hoveredArrow = null;
-              }
-              
-              // Highlight new hovered arrow
-              if (arrowIntersects.length > 0) {
-                arrowIntersects.sort((a, b) => a.distance - b.distance);
-                const hoveredArrowElement = arrowIntersects[0].element;
-                
-                hoveredArrowElement.setAttribute('color', '#FFFF00'); // Yellow
-                hoveredArrow = hoveredArrowElement;
-              }
+      // Only handle arrow hover if Greek alphabet puzzle is not solved
+      if (!puzzleState['star-background']) {
+        // Check for intersection with arrows
+        const arrows = document.querySelectorAll('.greek-arrow-up, .greek-arrow-down');
+        const arrowIntersects = [];
+        
+        arrows.forEach(arrow => {
+          if (arrow.object3D) {
+            const intersect = raycaster.intersectObject(arrow.object3D, true);
+            if (intersect.length > 0) {
+              arrowIntersects.push({ element: arrow, distance: intersect[0].distance });
+            }
+          }
+        });
+        
+        // Reset previously hovered arrow to black
+        if (hoveredArrow && hoveredArrow !== null) {
+          hoveredArrow.setAttribute('color', '#000000');
+          hoveredArrow = null;
+        }
+        
+        // Highlight new hovered arrow
+        if (arrowIntersects.length > 0) {
+          arrowIntersects.sort((a, b) => a.distance - b.distance);
+          const hoveredArrowElement = arrowIntersects[0].element;
+          
+          hoveredArrowElement.setAttribute('color', '#FFFF00'); // Yellow
+          hoveredArrow = hoveredArrowElement;
+        }
+      } else {
+        // Reset hovered arrow if puzzle is solved
+        if (hoveredArrow && hoveredArrow !== null) {
+          hoveredArrow.setAttribute('color', '#000000');
+          hoveredArrow = null;
+        }
+      }
             }
           }
         }
@@ -2229,8 +2316,10 @@ function initSolarSystem() {
       animateCompletedStarLamp('star-lamp-11');
       // Turn on star lamps for next puzzle (zodiac)
       updateStarLampsForPuzzle('table-2');
-      // Show completion message
-      showCompletionMessage('Big Dipper');
+      // Auto-exit puzzle mode
+      setTimeout(() => {
+        switchToOriginalView();
+      }, 500);
       return true;
     }
     return false;
@@ -2295,8 +2384,8 @@ function initSolarSystem() {
   
   // Handle constellation star click
   function handleConstellationStarClick(event) {
-    // Only handle clicks when in camera lock mode (blackboard view)
-    if (!isBlackboardView && !window.isBlackboardView) return;
+    // Only handle clicks when in camera lock mode (blackboard view) and puzzle not solved
+    if ((!isBlackboardView && !window.isBlackboardView) || puzzleState['blackboard']) return;
     
     // Only handle left mouse button
     if (event.button !== 0) return;
@@ -2535,6 +2624,142 @@ function initSolarSystem() {
     return false;
   }
   
+  // Play case animation halfway and stop
+  function playCaseAnimationHalfway() {
+    if (!caseEntity) {
+      console.warn('Case entity not found');
+      // Try to find it
+      const scene = document.querySelector('a-scene');
+      const allEntities = scene.querySelectorAll('[gltf-model]');
+      for (let entity of allEntities) {
+        if (entity.getAttribute('gltf-model') === 'data/models/case.glb') {
+          caseEntity = entity;
+          console.log('Found case entity');
+          break;
+        }
+      }
+      if (!caseEntity) {
+        console.warn('Case entity still not found after search');
+        return;
+      }
+    }
+    
+    const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
+    if (!THREE) {
+      console.warn('THREE.js not available');
+      return;
+    }
+    
+    // Function to setup animation
+    function setupCaseAnimation() {
+      const object3D = caseEntity.object3D;
+      if (!object3D) {
+        console.warn('Case object3D not found');
+        return;
+      }
+      
+      // Find animations in the model - check both object3D and its children
+      let animations = [];
+      
+      // Check if animations are directly on object3D
+      if (object3D.animations && object3D.animations.length > 0) {
+        animations = animations.concat(object3D.animations);
+      }
+      
+      // Also traverse children to find animations
+      object3D.traverse(function(child) {
+        if (child.animations && child.animations.length > 0) {
+          animations = animations.concat(child.animations);
+        }
+      });
+      
+      // Also check the gltf-model component's animations if available
+      const gltfModel = caseEntity.components['gltf-model'];
+      if (gltfModel && gltfModel.model && gltfModel.model.animations) {
+        animations = animations.concat(gltfModel.model.animations);
+      }
+      
+      if (animations.length === 0) {
+        console.warn('No animations found in case model. Object3D:', object3D);
+        console.warn('Checking gltf-model component...');
+        // Try accessing via gltf-model component
+        const gltfComponent = caseEntity.components['gltf-model'];
+        if (gltfComponent) {
+          console.log('gltf-model component found:', gltfComponent);
+          if (gltfComponent.model) {
+            console.log('Model found:', gltfComponent.model);
+            if (gltfComponent.model.animations) {
+              console.log('Animations found:', gltfComponent.model.animations);
+              animations = gltfComponent.model.animations;
+            }
+          }
+        }
+        
+        if (animations.length === 0) {
+          console.warn('Still no animations found after checking gltf-model component');
+          return;
+        }
+      }
+      
+      // Create animation mixer - use the root object3D
+      const mixer = new THREE.AnimationMixer(object3D);
+      
+      // Get the first animation clip
+      const animationClip = animations[0];
+      const fullDuration = animationClip.duration;
+      const halfDuration = fullDuration / 2;
+      
+      console.log(`Case animation duration: ${fullDuration}s, playing for ${halfDuration}s`);
+      
+      // Create action and play
+      const action = mixer.clipAction(animationClip);
+      action.play();
+      
+      // Store mixer and action on entity
+      caseEntity.mixer = mixer;
+      caseEntity.animationAction = action;
+      caseEntity.animationHalfDuration = halfDuration;
+      
+      // Add component to case entity to update mixer on tick
+      caseEntity.setAttribute('case-animation-updater', '');
+    }
+    
+    // Wait for model to be loaded - use both model-loaded event and check periodically
+    function trySetupAnimation() {
+      const object3D = caseEntity.object3D;
+      const gltfComponent = caseEntity.components['gltf-model'];
+      
+      // Check if model is loaded
+      if (object3D && (object3D.animations || (gltfComponent && gltfComponent.model))) {
+        setupCaseAnimation();
+        return true;
+      }
+      return false;
+    }
+    
+    // Try immediately
+    if (!trySetupAnimation()) {
+      // Wait for model to load
+      caseEntity.addEventListener('model-loaded', function onCaseLoaded() {
+        caseEntity.removeEventListener('model-loaded', onCaseLoaded);
+        setTimeout(() => {
+          if (!trySetupAnimation()) {
+            console.warn('Model loaded but animations not found, retrying...');
+            // Retry after a short delay
+            setTimeout(trySetupAnimation, 500);
+          }
+        }, 100);
+      });
+      
+      // Also try after a delay in case event already fired
+      setTimeout(() => {
+        if (!caseEntity.mixer) {
+          trySetupAnimation();
+        }
+      }, 1000);
+    }
+  }
+  
   // Check if all Greek letters match their expected values
   function checkAllGreekLettersMatch() {
     const totalControls = Object.keys(expectedGreekLetters).length;
@@ -2558,8 +2783,12 @@ function initSolarSystem() {
       // Animate completed star lamps
       animateCompletedStarLamp('star-lamp-8');
       animateCompletedStarLamp('star-lamp-9');
-      // Show completion message
-      showCompletionMessage('Greek Alphabet');
+      // Play case animation halfway
+      playCaseAnimationHalfway();
+      // Auto-exit puzzle mode
+      setTimeout(() => {
+        switchToOriginalView();
+      }, 500);
     }
   }
   
@@ -2836,7 +3065,6 @@ function initSolarSystem() {
     function initialize() {
       attachEventListeners();
       initProximityUI();
-      initESCUI();
       initCompletionMessageUI();
       replaceSpheresWithZodiacSymbols();
       initDragAndDrop();
@@ -2861,7 +3089,6 @@ function initSolarSystem() {
     setTimeout(() => {
       attachEventListeners();
       initProximityUI();
-      initESCUI();
       initCompletionMessageUI();
       replaceSpheresWithZodiacSymbols();
       initDragAndDrop();
@@ -3123,6 +3350,7 @@ function initSolarSystem() {
           
           // Set emissive white material for key.glb
           if (modelPath === 'data/models/key.glb') {
+            keyEntity = modelEntity; // Store reference
             modelEntity.addEventListener('model-loaded', function() {
               const THREE = AFRAME.THREE;
               const object3D = modelEntity.object3D;
@@ -3142,6 +3370,14 @@ function initSolarSystem() {
               
               console.log('Key model loaded, emissive white material applied');
             });
+          }
+          
+          // Store references to door and case entities
+          if (modelPath === 'data/models/door.glb') {
+            doorEntity = modelEntity;
+          }
+          if (modelPath === 'data/models/case.glb') {
+            caseEntity = modelEntity;
           }
         } else if (fileExtension === 'fbx') {
           // Use fbx-model component from aframe-extras for FBX files

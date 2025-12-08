@@ -101,18 +101,6 @@
           font="roboto">
         </a-text>
       </a-entity>
-      <!-- ESC UI as A-Frame entity (top left of screen) -->
-      <a-entity id="esc-ui-entity" class="esc-ui-entity" visible="false">
-        <!-- Q Go Back text in white -->
-        <a-text 
-          position="-0.48 0.38 -0.48" 
-          value="Q Go Back" 
-          align="left" 
-          color="#ffffff" 
-          width="0.4"
-          font="roboto">
-        </a-text>
-      </a-entity>
       <!-- Completion Message UI as A-Frame entity (center of screen) -->
       <a-entity id="completion-message-entity" class="completion-message-entity" visible="false">
         <a-text 
@@ -271,11 +259,6 @@
       </div>
       <span class="proximity-text">Solve Puzzle</span>
     </div>
-  </div>
-  
-  <!-- ESC UI -->
-  <div id="esc-ui" class="esc-ui hidden">
-    <span class="esc-text">Q Go Back</span>
   </div>
   
   <script type="module" src="/src/main.js"></script>
