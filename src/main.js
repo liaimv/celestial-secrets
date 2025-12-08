@@ -618,9 +618,9 @@ function initSolarSystem() {
     // Get blackboard position
     const blackboardPos = getBlackboardWorldPosition();
     
-    // Position camera: x = 4, same y and z as blackboard
+    // Position camera: x = 3, same y and z as blackboard
     const blackboardViewPosition = {
-      x: 4, // Camera x position
+      x: 3, // Camera x position
       y: 2.5, // Same y as blackboard
       z: -13.455 // Same z as blackboard
     };
@@ -2840,8 +2840,8 @@ function initSolarSystem() {
       if (isStarPolyhedron) {
         // Position parent at star location
         parentEntity.setAttribute('position', `${x} ${y} ${z}`);
-        // Model is positioned relative to parent (at origin)
-        modelEntity.setAttribute('position', '0 0 0');
+        // Model is positioned relative to parent
+        modelEntity.setAttribute('position', '0 -0.09 0');
       } else {
         // Regular model positioning
         modelEntity.setAttribute('position', `${x} ${y} ${z}`);
