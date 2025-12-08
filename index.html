@@ -12,25 +12,35 @@
   <a-scene renderer="antialias: true; colorManagement: true; sortObjects: true">
     <!-- Room Environment -->
     <!-- Floor -->
-    <a-plane position="0 0 -13.455" rotation="-90 0 0" width="20" height="20" color="#8B7355" material="roughness: 0.8; metalness: 0.1" scale="0.654 0.654 0.654"></a-plane>
+    <a-plane position="0 0 -13.455" rotation="-90 0 0" width="20" height="20" material="src: data/textures/carpet/Southern Hemisphere Star Constellation Map Carpet (Tiled).jpg; normalMap: data/textures/carpet/Carpet_Normal (Tiled).jpg; roughnessMap: data/textures/carpet/Carpet_Roughness (Tiled).jpg; aoMap: data/textures/carpet/Carpet_AO (Tiled).jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5" scale="0.654 0.654 0.654"></a-plane>
     
     <!-- Ceiling -->
-    <a-plane position="0 5 -13.455" rotation="90 0 0" width="20" height="20" color="#D3D3D3" material="roughness: 0.9" scale="0.654 0.654 0.654"></a-plane>
+    <a-plane position="0 5 -13.455" rotation="90 180 0" width="20" height="20" material="src: data/textures/carpet/Northern Hemisphere Star Constellation Map Carpet (Tiled).jpg; normalMap: data/textures/carpet/Carpet_Normal (Tiled).jpg; roughnessMap: data/textures/carpet/Carpet_Roughness (Tiled).jpg; aoMap: data/textures/carpet/Carpet_AO (Tiled).jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5" scale="0.654 0.654 0.654"></a-plane>
     
     <!-- Back Wall (where table will be) -->
-    <a-plane position="0 2.5 -19.991" rotation="0 0 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
+    <a-plane position="0 2.5 -19.991" rotation="0 0 0" width="13.08" height="5" material="src: data/textures/carpet/Carpet_Color (Dark).jpg; normalMap: data/textures/carpet/Carpet012_2K-JPG_NormalGL.jpg; aoMap: data/textures/carpet/Carpet012_2K-JPG_AmbientOcclusion.jpg; roughnessMap: data/textures/carpet/Carpet012_2K-JPG_Roughness.jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5; side: double"></a-plane>
     
     <!-- Front Wall -->
-    <a-plane position="0 2.5 -6.915" rotation="0 180 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
+    <a-plane position="0 2.5 -6.915" rotation="0 180 0" width="13.08" height="5" material="src: data/textures/carpet/Carpet_Color (Dark).jpg; normalMap: data/textures/carpet/Carpet012_2K-JPG_NormalGL.jpg; aoMap: data/textures/carpet/Carpet012_2K-JPG_AmbientOcclusion.jpg; roughnessMap: data/textures/carpet/Carpet012_2K-JPG_Roughness.jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5; side: double"></a-plane>
     
     <!-- Left Wall -->
-    <a-plane position="-6.54 2.5 -13.455" rotation="0 90 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
+    <a-plane position="-6.54 2.5 -13.455" rotation="0 90 0" width="13.08" height="5" material="src: data/textures/carpet/Carpet_Color (Dark).jpg; normalMap: data/textures/carpet/Carpet012_2K-JPG_NormalGL.jpg; aoMap: data/textures/carpet/Carpet012_2K-JPG_AmbientOcclusion.jpg; roughnessMap: data/textures/carpet/Carpet012_2K-JPG_Roughness.jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5; side: double"></a-plane>
     
     <!-- Star Background Image on Left Wall (between middle and top) -->
     <a-image id="star-background-image" position="-6.53 3.2 -13.455" rotation="0 90 0" width="4" height="2.25" scale="2.5 2.5 2.5" src="data/star_constellations/star_background.jpg" material="side: double"></a-image>
     
+    <!-- Frame around Star Background Image -->
+    <!-- Top frame (horizontal) -->
+    <a-box position="-6.53 4.517 -13.455" rotation="0 90 0" width="10.2" height="0.15" depth="0.1" scale="0.976 1 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
+    <!-- Bottom frame (horizontal) -->
+    <a-box position="-6.53 1.883 -13.455" rotation="0 90 0" width="10.2" height="0.15" depth="0.1" scale="0.976 1 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
+    <!-- Left frame (vertical) -->
+    <a-box position="-6.53 3.2 -18.505" rotation="0 90 0" width="0.15" height="5.775" depth="0.1" scale="1 0.482 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
+    <!-- Right frame (vertical) -->
+    <a-box position="-6.53 3.2 -8.405" rotation="0 90 0" width="0.15" height="5.775" depth="0.1" scale="1 0.482 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
+    
     <!-- Right Wall -->
-    <a-plane position="6.54 2.5 -13.455" rotation="0 -90 0" width="13.08" height="5" color="#808080" material="roughness: 0.7; side: double"></a-plane>
+    <a-plane position="6.54 2.5 -13.455" rotation="0 -90 0" width="13.08" height="5" material="src: data/textures/carpet/Carpet_Color (Dark).jpg; normalMap: data/textures/carpet/Carpet012_2K-JPG_NormalGL.jpg; aoMap: data/textures/carpet/Carpet012_2K-JPG_AmbientOcclusion.jpg; roughnessMap: data/textures/carpet/Carpet012_2K-JPG_Roughness.jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5; side: double"></a-plane>
     
     <!-- Big Dipper Constellation Blackboard on Right Wall -->
     <a-entity id="centaurus-board" position="6.53 2.5 -13.455" rotation="0 -90 0">
@@ -69,7 +79,7 @@
     <a-sky color="#87CEEB"></a-sky>
     
     <!-- Camera (inside room, looking at table) -->
-    <a-camera position="0 1.6 -13.455" rotation="0 0 0">
+    <a-camera position="0 2.5 -13.455" rotation="0 0 0">
       <!-- Proximity UI as A-Frame entity (bottom right of screen) -->
       <a-entity id="proximity-ui-entity" class="proximity-ui-entity" visible="false">
         <!-- E text in white -->
@@ -119,63 +129,61 @@
     </a-camera>
     
     <!-- Lighting -->
-    <a-light type="ambient" color="#ffffff" intensity="0.4"></a-light>
-    <a-light type="directional" position="0 4 -10" color="#ffffff" intensity="0.6" target="#table"></a-light>
-    <a-light type="point" position="0 3 -18" color="#ffffaa" intensity="0.8"></a-light>
+    <a-light type="point" position="0 3.411 -13.445" color="#ffffff" intensity="5" distance="7"></a-light>
     
     <!-- Table inside room (moved forward from wall) -->
-    <a-entity id="table" position="0.1 0.75 -15">
+    <a-entity id="table" position="0 1.2 -15">
       <!-- Table Top (wider table) -->
-      <a-box position="0 0.25 -3.5" width="16" height="0.1" depth="6" color="#8B4513" material="roughness: 0.6; metalness: 0.2" scale="0.27 1 0.5"></a-box>
+      <a-box position="0 0.25 -3.5" width="16" height="0.1" depth="6" scale="0.27 1 0.5" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1; repeat: 2 2"></a-box>
       <!-- Table Legs (at four corners) -->
       <!-- Front Left (leg edge matches table corner) -->
-      <a-box position="-2.06 -0.3 -4.9" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="-2.06 -0.718 -4.9" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       <!-- Front Right (leg edge matches table corner) -->
-      <a-box position="2.06 -0.3 -4.9" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="2.06 -0.718 -4.9" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       <!-- Back Left (leg edge matches table corner) -->
-      <a-box position="-2.06 -0.3 -2.1" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="-2.06 -0.718 -2.1" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       <!-- Back Right (leg edge matches table corner) -->
-      <a-box position="2.06 -0.3 -2.1" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="2.06 -0.718 -2.1" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       
       <!-- Solar System on Table (centered, smaller rings) -->
-      <a-entity position="0.5 0.5 -3.5" id="solar-system">
+      <a-entity position="0 0.5 -3.5" id="solar-system">
         <!-- Sun (centered on table) -->
         <a-sphere position="0 0 0" radius="0.12" src="data/planet_textures/Sun.jpg" material="emissive: #FFD700; emissiveIntensity: 0.8">
           <a-animation attribute="rotation" to="0 360 0" dur="10000" repeat="indefinite"></a-animation>
         </a-sphere>
         
-        <!-- Mercury -->
-        <a-sphere data-planet="mercury" data-radius="0.25" data-ring-index="0" class="draggable" position="-2 0 -1" radius="0.025" src="data/planet_textures/Mercury.jpg">
+        <!-- Mercury (Left Side) -->
+        <a-sphere data-planet="mercury" data-radius="0.25" data-ring-index="0" class="draggable" position="-1.5 0 -0.75" radius="0.025" src="data/planet_textures/Mercury.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="10000" repeat="indefinite"></a-animation>
         </a-sphere>
-        <a-ring data-ring="0" data-ring-radius="0.25" position="0 0 0" rotation="-90 0 0" radius-inner="0.24" radius-outer="0.26" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="0" data-ring-radius="0.25" position="0 0 0" rotation="-90 0 0" radius-inner="0.25" radius-outer="0.26" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
-        <!-- Venus -->
-        <a-sphere data-planet="venus" data-radius="0.35" data-ring-index="1" class="draggable" position="-2 0 -0.714" radius="0.03" src="data/planet_textures/Venus.jpg">
+        <!-- Venus (Left Side) -->
+        <a-sphere data-planet="venus" data-radius="0.35" data-ring-index="1" class="draggable" position="-1.5 0 -0.25" radius="0.03" src="data/planet_textures/Venus.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="8000" repeat="indefinite"></a-animation>
         </a-sphere>
-        <a-ring data-ring="1" data-ring-radius="0.35" position="0 0 0" rotation="-90 0 0" radius-inner="0.34" radius-outer="0.36" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="1" data-ring-radius="0.35" position="0 0 0" rotation="-90 0 0" radius-inner="0.35" radius-outer="0.36" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
-        <!-- Earth -->
-        <a-sphere data-planet="earth" data-radius="0.45" data-ring-index="2" class="draggable" position="-2 0 -0.428" radius="0.035" src="data/planet_textures/Earth.jpg">
+        <!-- Earth (Left Side) -->
+        <a-sphere data-planet="earth" data-radius="0.45" data-ring-index="2" class="draggable" position="-1.5 0 0.25" radius="0.035" src="data/planet_textures/Earth.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="5000" repeat="indefinite"></a-animation>
         </a-sphere>
-        <a-ring data-ring="2" data-ring-radius="0.45" position="0 0 0" rotation="-90 0 0" radius-inner="0.44" radius-outer="0.46" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="2" data-ring-radius="0.45" position="0 0 0" rotation="-90 0 0" radius-inner="0.45" radius-outer="0.46" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
-        <!-- Mars -->
-        <a-sphere data-planet="mars" data-radius="0.55" data-ring-index="3" class="draggable" position="-2 0 -0.142" radius="0.03" src="data/planet_textures/Mars.jpg">
+        <!-- Mars (Left Side) -->
+        <a-sphere data-planet="mars" data-radius="0.55" data-ring-index="3" class="draggable" position="-1.5 0 0.75" radius="0.03" src="data/planet_textures/Mars.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="6000" repeat="indefinite"></a-animation>
         </a-sphere>
-        <a-ring data-ring="3" data-ring-radius="0.55" position="0 0 0" rotation="-90 0 0" radius-inner="0.54" radius-outer="0.56" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="3" data-ring-radius="0.55" position="0 0 0" rotation="-90 0 0" radius-inner="0.55" radius-outer="0.56" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
-        <!-- Jupiter -->
-        <a-sphere data-planet="jupiter" data-radius="0.7" data-ring-index="4" class="draggable" position="-2 0 0.144" radius="0.06" src="data/planet_textures/Jupiter.jpg">
+        <!-- Jupiter (Right Side) -->
+        <a-sphere data-planet="jupiter" data-radius="0.7" data-ring-index="4" class="draggable" position="1.5 0 -0.75" radius="0.06" src="data/planet_textures/Jupiter.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="3000" repeat="indefinite"></a-animation>
         </a-sphere>
-        <a-ring data-ring="4" data-ring-radius="0.7" position="0 0 0" rotation="-90 0 0" radius-inner="0.69" radius-outer="0.71" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="4" data-ring-radius="0.7" position="0 0 0" rotation="-90 0 0" radius-inner="0.7" radius-outer="0.71" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
-        <!-- Saturn with Rings -->
-        <a-entity data-planet="saturn" data-radius="0.85" data-ring-index="5" class="draggable" position="-2 0 0.43">
+        <!-- Saturn with Rings (Right Side) -->
+        <a-entity data-planet="saturn" data-radius="0.85" data-ring-index="5" class="draggable" position="1.5 0 -0.25">
           <a-sphere position="0 0 0" radius="0.06" src="data/planet_textures/Saturn.jpg">
             <a-animation attribute="rotation" to="0 360 0" dur="4000" repeat="indefinite"></a-animation>
           </a-sphere>
@@ -206,35 +214,35 @@
           <a-torus position="0 0 0" rotation="-90 0 0" radius="0.121" radius-tubular="0.003" scale="1 1 0.1" segments-tubular="70" color="#A0825D" arc="360"></a-torus>
           <a-torus position="0 0 0" rotation="-90 0 0" radius="0.122" radius-tubular="0.003" scale="1 1 0.1" segments-tubular="70" color="#FDF5E6" arc="360"></a-torus>
         </a-entity>
-        <a-ring data-ring="5" data-ring-radius="0.85" position="0 0 0" rotation="-90 0 0" radius-inner="0.84" radius-outer="0.86" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="5" data-ring-radius="0.85" position="0 0 0" rotation="-90 0 0" radius-inner="0.85" radius-outer="0.86" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
-        <!-- Uranus -->
-        <a-sphere data-planet="uranus" data-radius="1" data-ring-index="6" class="draggable" position="-2 0 0.714" radius="0.04" src="data/planet_textures/Uranus.jpg">
+        <!-- Uranus (Right Side) -->
+        <a-sphere data-planet="uranus" data-radius="1" data-ring-index="6" class="draggable" position="1.5 0 0.25" radius="0.04" src="data/planet_textures/Uranus.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="5000" repeat="indefinite"></a-animation>
         </a-sphere>
-        <a-ring data-ring="6" data-ring-radius="1" position="0 0 0" rotation="-90 0 0" radius-inner="0.99" radius-outer="1.01" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="6" data-ring-radius="1" position="0 0 0" rotation="-90 0 0" radius-inner="1" radius-outer="1.01" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
-        <!-- Neptune -->
-        <a-sphere data-planet="neptune" data-radius="1.15" data-ring-index="7" class="draggable" position="-2 0 1" radius="0.035" src="data/planet_textures/Neptune.jpg">
+        <!-- Neptune (Right Side) -->
+        <a-sphere data-planet="neptune" data-radius="1.15" data-ring-index="7" class="draggable" position="1.5 0 0.75" radius="0.035" src="data/planet_textures/Neptune.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="5500" repeat="indefinite"></a-animation>
         </a-sphere>
-        <a-ring data-ring="7" data-ring-radius="1.15" position="0 0 0" rotation="-90 0 0" radius-inner="1.14" radius-outer="1.16" color="#ffffff" opacity="0.8"></a-ring>
+        <a-ring data-ring="7" data-ring-radius="1.15" position="0 0 0" rotation="-90 0 0" radius-inner="1.15" radius-outer="1.16" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
       </a-entity>
     </a-entity>
     
     <!-- Table on other side of solar system wall (same size) - along front wall -->
-    <a-entity id="table-2" position="0.1 0.75 -4.915">
+    <a-entity id="table-2" position="0 1.2 -4.915">
       <!-- Table Top (wider table) -->
-      <a-box position="0 0.25 -3.5" width="16" height="0.1" depth="6" color="#8B4513" material="roughness: 0.6; metalness: 0.2" scale="0.27 1 0.5"></a-box>
+      <a-box position="0 0.25 -3.5" width="16" height="0.1" depth="6" scale="0.27 1 0.5" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1; repeat: 2 2"></a-box>
       <!-- Table Legs (at four corners) -->
       <!-- Front Left (leg edge matches table corner) -->
-      <a-box position="-2.06 -0.3 -4.9" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="-2.06 -0.718 -4.9" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       <!-- Front Right (leg edge matches table corner) -->
-      <a-box position="2.06 -0.3 -4.9" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="2.06 -0.718 -4.9" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       <!-- Back Left (leg edge matches table corner) -->
-      <a-box position="-2.06 -0.3 -2.1" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="-2.06 -0.718 -2.1" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       <!-- Back Right (leg edge matches table corner) -->
-      <a-box position="2.06 -0.3 -2.1" width="0.2" height="1" depth="0.2" color="#8B4513" material="roughness: 0.6; metalness: 0.2"></a-box>
+      <a-box position="2.06 -0.718 -2.1" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       
       <!-- Four Elements Images - horizontally in the middle towards the back -->
       <a-plane position="-1.5 0.31 -3.9" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Air.png" material="side: double; transparent: true"></a-plane>

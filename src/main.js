@@ -424,17 +424,20 @@ function initSolarSystem() {
     // Position camera: x and z from table top, y fixed at 2.750
     // Z position depends on which table
     let cameraZ = worldZ;
+    let cameraY = 2.750; // Default y position
     if (tableId === 'table-2') {
       // For table-2, position camera above the table (same Z as table top center)
       cameraZ = worldZ;
+      cameraY = 3.4; // Y position for zodiac symbols puzzle mode
     } else {
       // For solar system table, use fixed Z position
       cameraZ = -18.500;
+      cameraY = 3.4; // Y position for solar system puzzle mode
     }
     
     const topDownPosition = {
       x: worldX,
-      y: 2.750,
+      y: cameraY,
       z: cameraZ
     };
     
@@ -2624,6 +2627,7 @@ function initSolarSystem() {
       initConstellationGame();
       setStarBackgroundAspectRatio();
       createConstellationImages();
+      loadAllModels();
       // Don't start animation automatically - wait for all planets to be correctly placed
     }
     
@@ -2648,8 +2652,291 @@ function initSolarSystem() {
       initConstellationGame();
       setStarBackgroundAspectRatio();
       createConstellationImages();
+      loadAllModels();
       // Don't start animation automatically - wait for all planets to be correctly placed
     }, 500);
+  }
+  
+  // Function to load all models from public/data/models folder
+  function loadAllModels() {
+    const scene = document.querySelector('a-scene');
+    if (!scene) return;
+    
+    // List of models with their specific configurations
+    const models = [
+      {
+        path: 'data/models/door.glb',
+        position: { x: 4.958, y: 2.065, z: -19.998 },
+        scale: 0.02,
+        rotation: { x: 0, y: 90, z: 0 }
+      },
+      {
+        path: 'data/models/saturno_lightstar_pendant_chandelier.glb',
+        position: { x: 0, y: 3.055, z: -13.445 },
+        scale: 0.0015
+      },
+      // Wall lamps on back wall corners
+      {
+        path: 'data/models/wall_lamp.glb',
+        position: { x: -6.232, y: 3.789, z: -20.007 },
+        scale: 0.03,
+        rotation: { x: 0, y: 180, z: 0 },
+        hasLight: true
+      },
+      {
+        path: 'data/models/wall_lamp.glb',
+        position: { x: 6.232, y: 3.789, z: -20.007 },
+        scale: 0.03,
+        rotation: { x: 0, y: 180, z: 0 },
+        hasLight: true
+      },
+      // Wall lamps on front wall corners
+      {
+        path: 'data/models/wall_lamp.glb',
+        position: { x: -6.232, y: 3.789, z: -6.883 },
+        scale: 0.03,
+        rotation: { x: 0, y: 0, z: 0 },
+        hasLight: true
+      },
+      {
+        path: 'data/models/wall_lamp.glb',
+        position: { x: 6.232, y: 3.789, z: -6.883 },
+        scale: 0.03,
+        rotation: { x: 0, y: 0, z: 0 },
+        hasLight: true
+      },
+      {
+        path: 'data/models/star_polyhedron.glb',
+        position: { x: 0, y: 3.7, z: -18.529 },
+        scale: 0.1,
+        rotation: { x: 0, y: 35, z: 0 },
+        hasLight: true,
+        lightConfig: {
+          position: '0 0 0',
+          decay: 1,
+          distance: 4,
+          intensity: 10
+        }
+      },
+      {
+        path: 'data/models/star_polyhedron.glb',
+        position: { x: 0, y: 3.7, z: -8.408 },
+        scale: 0.1,
+        rotation: { x: 0, y: 35, z: 0 },
+        hasLight: true,
+        lightConfig: {
+          position: '0 0 0',
+          decay: 1,
+          distance: 4,
+          intensity: 10
+        }
+      },
+      {
+        path: 'data/models/star_polyhedron.glb',
+        position: { x: -5.974, y: 1.303, z: -11.268 },
+        scale: 0.1,
+        rotation: { x: 0, y: 125, z: 180 },
+        hasLight: true,
+        lightConfig: {
+          position: '0 0 0',
+          decay: 1,
+          distance: 4,
+          intensity: 10
+        }
+      },
+      {
+        path: 'data/models/star_polyhedron.glb',
+        position: { x: -5.974, y: 1.303, z: -15.622 },
+        scale: 0.1,
+        rotation: { x: 0, y: 125, z: 180 },
+        hasLight: true,
+        lightConfig: {
+          position: '0 0 0',
+          decay: 1,
+          distance: 4,
+          intensity: 10
+        }
+      },
+      {
+        path: 'data/models/star_polyhedron.glb',
+        position: { x: 5.974, y: 1.303, z: -11.268 },
+        scale: 0.1,
+        rotation: { x: 0, y: 125, z: 180 },
+        hasLight: true,
+        lightConfig: {
+          position: '0 0 0',
+          decay: 1,
+          distance: 4,
+          intensity: 10
+        }
+      },
+      {
+        path: 'data/models/star_polyhedron.glb',
+        position: { x: 5.974, y: 1.303, z: -15.622 },
+        scale: 0.1,
+        rotation: { x: 0, y: 125, z: 180 },
+        hasLight: true,
+        lightConfig: {
+          position: '0 0 0',
+          decay: 1,
+          distance: 4,
+          intensity: 10
+        }
+      }
+    ];
+    
+    // Room center position (based on floor position) - for models without specific positions
+    const centerX = 0;
+    const centerY = 1.5; // Height above floor
+    const centerZ = -13.455;
+    
+    // Spacing between models (for circular arrangement)
+    const spacing = 2;
+    
+    // Track models that need circular positioning
+    const modelsNeedingPositioning = models.filter(m => m.position === null);
+    
+    models.forEach((modelConfig, index) => {
+      const modelPath = modelConfig.path;
+      const isStarPolyhedron = modelPath === 'data/models/star_polyhedron.glb';
+      
+      // For star polyhedrons, create a parent "star lamp" entity
+      let parentEntity;
+      if (isStarPolyhedron) {
+        parentEntity = document.createElement('a-entity');
+        parentEntity.setAttribute('id', `star-lamp-${index}`);
+        parentEntity.setAttribute('class', 'star-lamp');
+      }
+      
+      const modelEntity = document.createElement('a-entity');
+      
+      // Determine file extension
+      const fileExtension = modelPath.split('.').pop().toLowerCase();
+      
+      if (fileExtension === 'glb' || fileExtension === 'gltf') {
+        // Use gltf-model component for GLB files
+        modelEntity.setAttribute('gltf-model', modelPath);
+      } else if (fileExtension === 'fbx') {
+        // Use fbx-model component from aframe-extras for FBX files
+        modelEntity.setAttribute('fbx-model', modelPath);
+      }
+      
+      // Set position - use specific position if provided, otherwise use circular arrangement
+      let x, y, z;
+      if (modelConfig.position) {
+        x = modelConfig.position.x;
+        y = modelConfig.position.y;
+        z = modelConfig.position.z;
+      } else {
+        // Position models in a circle around the center
+        const circularIndex = modelsNeedingPositioning.indexOf(modelConfig);
+        const angle = (circularIndex / modelsNeedingPositioning.length) * Math.PI * 2;
+        const radius = spacing;
+        x = centerX + Math.cos(angle) * radius;
+        y = centerY;
+        z = centerZ + Math.sin(angle) * radius;
+      }
+      
+      if (isStarPolyhedron) {
+        // Position parent at star location
+        parentEntity.setAttribute('position', `${x} ${y} ${z}`);
+        // Model is positioned relative to parent (at origin)
+        modelEntity.setAttribute('position', '0 0 0');
+      } else {
+        // Regular model positioning
+        modelEntity.setAttribute('position', `${x} ${y} ${z}`);
+      }
+      
+      modelEntity.setAttribute('scale', `${modelConfig.scale} ${modelConfig.scale} ${modelConfig.scale}`);
+      
+      // Set rotation if specified
+      if (modelConfig.rotation) {
+        if (isStarPolyhedron) {
+          // For star polyhedrons, apply rotation to parent so everything rotates together
+          parentEntity.setAttribute('rotation', `${modelConfig.rotation.x} ${modelConfig.rotation.y} ${modelConfig.rotation.z}`);
+        } else {
+          // For other models, apply rotation to model entity
+          modelEntity.setAttribute('rotation', `${modelConfig.rotation.x} ${modelConfig.rotation.y} ${modelConfig.rotation.z}`);
+        }
+      }
+      
+      // Add light if specified
+      if (modelConfig.hasLight) {
+        const lightEntity = document.createElement('a-light');
+        lightEntity.setAttribute('type', 'point');
+        
+        // Use custom light config if provided, otherwise use defaults
+        if (modelConfig.lightConfig) {
+          lightEntity.setAttribute('position', modelConfig.lightConfig.position || '0 0 0');
+          lightEntity.setAttribute('decay', modelConfig.lightConfig.decay !== undefined ? modelConfig.lightConfig.decay : 1);
+          lightEntity.setAttribute('distance', modelConfig.lightConfig.distance !== undefined ? modelConfig.lightConfig.distance : 7);
+          lightEntity.setAttribute('intensity', modelConfig.lightConfig.intensity !== undefined ? modelConfig.lightConfig.intensity : 10);
+          if (modelConfig.lightConfig.color) {
+            lightEntity.setAttribute('color', modelConfig.lightConfig.color);
+          } else {
+            lightEntity.setAttribute('color', '#ffce7a');
+          }
+        } else {
+          // Default light settings for other models
+          lightEntity.setAttribute('position', '0 20.785 -8.241'); // Relative to lamp position
+          lightEntity.setAttribute('color', '#ffce7a');
+          lightEntity.setAttribute('intensity', '10');
+          lightEntity.setAttribute('distance', '7');
+        }
+        
+        modelEntity.appendChild(lightEntity);
+      }
+      
+      if (isStarPolyhedron) {
+        // Add model to parent, then add parent to scene
+        parentEntity.appendChild(modelEntity);
+        scene.appendChild(parentEntity);
+        
+        // Store parent reference for cylinder creation
+        modelConfig.parentEntity = parentEntity;
+      } else {
+        // Add to scene directly
+        scene.appendChild(modelEntity);
+      }
+      
+      console.log(`Loaded model: ${modelPath} at position (${x}, ${y}, ${z}) with scale ${modelConfig.scale}`);
+    });
+    
+    // Add gold metal cylinders from star polyhedrons (as children of star lamp)
+    // Cylinders use fixed offsets relative to parent, so they rotate with the parent
+    const starPolyhedronConfigs = models.filter(m => m.path === 'data/models/star_polyhedron.glb');
+    starPolyhedronConfigs.forEach(starPolyhedronConfig => {
+      if (starPolyhedronConfig && starPolyhedronConfig.position && starPolyhedronConfig.parentEntity) {
+        // Fixed offsets relative to star model (which is at 0,0,0 relative to parent)
+        // For original stars: star at y=3.7, thin cylinder center at y=4.5, wide at y=5.230
+        // So offsets are: thin center = 0.8, wide = 1.53 relative to star
+        const thinCylinderOffsetY = 0.8; // Fixed offset from star model
+        const wideCylinderOffsetY = 1.53; // Fixed offset from star model
+        const cylinderHeight = 1.3; // Fixed height
+        
+        // Thin cylinder (position relative to parent, extends from star)
+        const cylinderEntity = document.createElement('a-cylinder');
+        cylinderEntity.setAttribute('position', `0 ${thinCylinderOffsetY} 0`); // Fixed offset relative to parent
+        cylinderEntity.setAttribute('height', cylinderHeight);
+        cylinderEntity.setAttribute('radius', '0.02'); // Thin cylinder
+        cylinderEntity.setAttribute('scale', '0.5 1 0.5');
+        cylinderEntity.setAttribute('material', 'color: #B8860B; metalness: 1.0; roughness: 0.2'); // Darker gold
+        
+        starPolyhedronConfig.parentEntity.appendChild(cylinderEntity);
+        
+        // Wider cylinder (position relative to parent)
+        const wideCylinderEntity = document.createElement('a-cylinder');
+        wideCylinderEntity.setAttribute('position', `0 ${wideCylinderOffsetY} 0`); // Fixed offset relative to parent
+        wideCylinderEntity.setAttribute('height', '0.3');
+        wideCylinderEntity.setAttribute('radius', '0.08'); // Wider cylinder
+        wideCylinderEntity.setAttribute('scale', '2 2 2');
+        wideCylinderEntity.setAttribute('material', 'color: #B8860B; metalness: 1.0; roughness: 0.2'); // Darker gold
+        
+        starPolyhedronConfig.parentEntity.appendChild(wideCylinderEntity);
+        
+        console.log(`Added gold cylinders to star lamp at (y=${starPolyhedronConfig.position.y}, z=${starPolyhedronConfig.position.z})`);
+      }
+    });
   }
 }
 
