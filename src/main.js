@@ -91,6 +91,181 @@ function initSolarSystem() {
     'neptune': false
   };
   
+  // Puzzle progression state
+  const puzzleOrder = ['solar-system', 'blackboard', 'table-2', 'star-background'];
+  const puzzleState = {
+    'solar-system': false,
+    'blackboard': false,
+    'table-2': false,
+    'star-background': false
+  };
+  
+  // Helper function to get the next available puzzle
+  function getNextAvailablePuzzle() {
+    for (const puzzleId of puzzleOrder) {
+      if (!puzzleState[puzzleId]) {
+        return puzzleId;
+      }
+    }
+    return null; // All puzzles completed
+  }
+  
+  // Star lamp management functions
+  function animateCompletedStarLamp(lampId) {
+    const lampEntity = document.getElementById(lampId);
+    if (!lampEntity) {
+      console.warn(`Star lamp ${lampId} not found`);
+      return;
+    }
+    
+    // Find the star_polyhedron model entity to animate
+    // For star-lamp-6, it's the direct child model
+    // For star-lamps 7-11, animate the currently visible model (unlit or lit)
+    let modelEntity = null;
+    
+    if (lampId === 'star-lamp-6') {
+      // For star-lamp-6, find the direct child model entity
+      const children = Array.from(lampEntity.children);
+      modelEntity = children.find(child => child.hasAttribute('gltf-model') && 
+        child.getAttribute('gltf-model') === 'data/models/star_polyhedron.glb');
+    } else {
+      // For other lamps, find the currently visible model (should be lit model if puzzle is completed)
+      // But if it's not lit yet, animate the unlit model
+      const litModel = lampEntity.querySelector('.star-lamp-lit');
+      const unlitModel = lampEntity.querySelector('.star-lamp-unlit');
+      
+      // Prefer lit model if it exists, otherwise use unlit model
+      modelEntity = litModel || unlitModel;
+    }
+    
+    if (!modelEntity) {
+      console.warn(`Star polyhedron model not found for ${lampId}. Children:`, Array.from(lampEntity.children).map(c => c.tagName + ' ' + (c.getAttribute('class') || '')));
+      return;
+    }
+    
+    // Check if animation already exists
+    if (modelEntity.querySelector('a-animation[attribute="rotation"]')) {
+      console.log(`Animation already exists for ${lampId}`);
+      return; // Already animated
+    }
+    
+    // Get current rotation of the model entity
+    // A-Frame rotation can be an object {x, y, z} or a string "x y z"
+    let currentRot = modelEntity.getAttribute('rotation');
+    let rotX = 0, rotY = 0, rotZ = 0;
+    
+    if (currentRot) {
+      if (typeof currentRot === 'object') {
+        rotX = currentRot.x || 0;
+        rotY = currentRot.y || 0;
+        rotZ = currentRot.z || 0;
+      } else if (typeof currentRot === 'string') {
+        const parts = currentRot.split(' ').map(parseFloat);
+        rotX = parts[0] || 0;
+        rotY = parts[1] || 0;
+        rotZ = parts[2] || 0;
+      }
+    }
+    
+    // Ensure rotation is set on the model entity (A-Frame needs this)
+    if (!currentRot) {
+      modelEntity.setAttribute('rotation', `${rotX} ${rotY} ${rotZ}`);
+    }
+    
+    // Determine rotation direction: positive for star-lamp-6, 9, 11; negative for others
+    const positiveRotationLamps = ['star-lamp-6', 'star-lamp-9', 'star-lamp-11'];
+    const isPositiveRotation = positiveRotationLamps.includes(lampId);
+    const rotationDelta = isPositiveRotation ? 360 : -360;
+    const rotationTo = `${rotX} ${rotY + rotationDelta} ${rotZ}`;
+    
+    // Try using the animation component directly via setAttribute
+    // This is more reliable than creating a-animation elements
+    try {
+      modelEntity.setAttribute('animation__rotate', {
+        property: 'rotation',
+        to: rotationTo,
+        dur: 15000,
+        loop: true,
+        easing: 'linear'
+      });
+      console.log(`Added ${isPositiveRotation ? 'positive' : 'negative'} rotation animation component to star_polyhedron model in ${lampId}`);
+    } catch (e) {
+      // Fallback to a-animation element if component doesn't work
+      console.log(`Animation component failed, using a-animation element:`, e);
+      const animation = document.createElement('a-animation');
+      animation.setAttribute('attribute', 'rotation');
+      animation.setAttribute('from', `${rotX} ${rotY} ${rotZ}`);
+      animation.setAttribute('to', rotationTo);
+      animation.setAttribute('dur', '15000');
+      animation.setAttribute('repeat', 'indefinite');
+      animation.setAttribute('easing', 'linear');
+      modelEntity.appendChild(animation);
+    }
+    
+    console.log(`Added ${isPositiveRotation ? 'positive' : 'negative'} rotation animation to star_polyhedron model in ${lampId} (from ${rotX} ${rotY} ${rotZ} to ${rotationTo})`);
+  }
+  
+  function updateStarLampsForPuzzle(puzzleId) {
+    const lampMapping = {
+      'blackboard': ['star-lamp-10', 'star-lamp-11'], // Constellation drawing puzzle
+      'table-2': ['star-lamp-7'], // Zodiac puzzle
+      'star-background': ['star-lamp-8', 'star-lamp-9'] // Star background puzzle
+    };
+    
+    const lampIds = lampMapping[puzzleId];
+    if (!lampIds) {
+      console.warn(`No lamp mapping for puzzle: ${puzzleId}`);
+      return;
+    }
+    
+    lampIds.forEach(lampId => {
+      const lampEntity = document.getElementById(lampId);
+      if (!lampEntity) {
+        console.warn(`Star lamp ${lampId} not found`);
+        return;
+      }
+      
+      // Find unlit and lit models
+      const unlitModel = lampEntity.querySelector('.star-lamp-unlit');
+      const litModel = lampEntity.querySelector('.star-lamp-lit');
+      
+      if (!unlitModel || !litModel) {
+        console.warn(`Star lamp ${lampId} missing unlit or lit model`);
+        return;
+      }
+      
+      // Transfer animation from unlit to lit model if it exists
+      const unlitAnimation = unlitModel.querySelector('a-animation[attribute="rotation"]');
+      if (unlitAnimation) {
+        // Get animation properties
+        const toValue = unlitAnimation.getAttribute('to');
+        const dur = unlitAnimation.getAttribute('dur');
+        // Remove animation from unlit model
+        unlitAnimation.remove();
+        // Add animation to lit model
+        const litAnimation = document.createElement('a-animation');
+        litAnimation.setAttribute('attribute', 'rotation');
+        litAnimation.setAttribute('to', toValue);
+        litAnimation.setAttribute('dur', dur);
+        litAnimation.setAttribute('repeat', 'indefinite');
+        litAnimation.setAttribute('easing', 'linear');
+        litModel.appendChild(litAnimation);
+      }
+      
+      // Hide unlit model, show lit model
+      unlitModel.setAttribute('visible', 'false');
+      litModel.setAttribute('visible', 'true');
+      
+      // Enable light on lit model
+      const lightEntity = litModel.querySelector('a-light');
+      if (lightEntity) {
+        lightEntity.setAttribute('intensity', '10'); // Enable light
+      }
+      
+      console.log(`Turned on star lamp ${lampId} for puzzle ${puzzleId}`);
+    });
+  }
+  
   // Proximity UI state
   let proximityUI = null;
   let isNearSolarSystem = false;
@@ -236,6 +411,12 @@ function initSolarSystem() {
     const allPlaced = Object.values(sphereCorrectPlacements).every(placed => placed === true);
     if (allPlaced) {
       console.log('All zodiac symbols are placed on their correct element images!');
+      // Mark puzzle as solved
+      puzzleState['table-2'] = true;
+      // Animate completed star lamp
+      animateCompletedStarLamp('star-lamp-7');
+      // Turn on star lamps for next puzzle (star background)
+      updateStarLampsForPuzzle('star-background');
       // Show completion message
       showCompletionMessage('Elements');
     }
@@ -268,6 +449,12 @@ function initSolarSystem() {
         console.log('All planets correctly placed! Starting orbital animation...');
         console.log('DEBUG: All 8 planets are on their correct rings');
         startOrbitalAnimation();
+        // Mark puzzle as solved
+        puzzleState['solar-system'] = true;
+        // Animate completed star lamp
+        animateCompletedStarLamp('star-lamp-6');
+        // Turn on star lamps for next puzzle (constellation drawing)
+        updateStarLampsForPuzzle('blackboard');
         // Show completion message
         showCompletionMessage('Solar System');
       }
@@ -907,8 +1094,10 @@ function initSolarSystem() {
     window.isTopDownView = false;
     window.topDownYRotation = 0; // Clear stored Y rotation
     
-    // Show proximity UI again if near a table, blackboard, or star background
-    if (proximityUI && (isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground)) {
+    // Show proximity UI again if near a table, blackboard, or star background (only if it's the next available puzzle)
+    const nextAvailablePuzzle = getNextAvailablePuzzle();
+    const isCurrentPuzzleAvailable = currentTable === nextAvailablePuzzle && !puzzleState[currentTable];
+    if (proximityUI && (isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground) && isCurrentPuzzleAvailable) {
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'true');
       } else {
@@ -940,6 +1129,16 @@ function initSolarSystem() {
       if (isTopDownView || isBlackboardView || isStarBackgroundView) {
         switchToOriginalView();
       } else {
+        // Get the next available puzzle
+        const nextAvailablePuzzle = getNextAvailablePuzzle();
+        const isCurrentPuzzleAvailable = currentTable === nextAvailablePuzzle && !puzzleState[currentTable];
+        
+        // Only allow entering puzzle mode if this is the next available puzzle
+        if (!isCurrentPuzzleAvailable) {
+          console.log('E key pressed but puzzle not available yet. Next available:', nextAvailablePuzzle);
+          return;
+        }
+        
         // Check if near star background
         if (isNearStarBackground && currentTable === 'star-background') {
           // Save current camera position and rotation BEFORE switching to star background view
@@ -1250,8 +1449,11 @@ function initSolarSystem() {
     
     // Show/hide UI based on proximity (but not in top-down view, blackboard view, or star background view)
     const isNearAny = isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground;
-    if (isNearAny && !wasNearAny && !isTopDownView && !isBlackboardView && !isStarBackgroundView) {
-      // Just entered proximity (only show if not in top-down view)
+    const nextAvailablePuzzle = getNextAvailablePuzzle();
+    const isCurrentPuzzleAvailable = currentTable === nextAvailablePuzzle && !puzzleState[currentTable];
+    
+    if (isNearAny && !wasNearAny && !isTopDownView && !isBlackboardView && !isStarBackgroundView && isCurrentPuzzleAvailable) {
+      // Just entered proximity (only show if not in top-down view and this is the next available puzzle)
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'true');
         console.log('Proximity UI shown (near:', currentTable, ')');
@@ -1259,8 +1461,8 @@ function initSolarSystem() {
         proximityUI.classList.remove('hidden');
         console.log('Proximity UI shown (near:', currentTable, ')');
       }
-    } else if ((!isNearAny && wasNearAny) || isTopDownView || isBlackboardView || isStarBackgroundView) {
-      // Just left proximity, or in top-down view, blackboard view, or star background view - hide proximity UI
+    } else if ((!isNearAny && wasNearAny) || isTopDownView || isBlackboardView || isStarBackgroundView || !isCurrentPuzzleAvailable) {
+      // Just left proximity, or in top-down view, blackboard view, or star background view, or puzzle not available - hide proximity UI
       if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
         proximityUI.setAttribute('visible', 'false');
       } else {
@@ -2020,6 +2222,13 @@ function initSolarSystem() {
     // Only log if all correct connections are made AND no incorrect connections exist
     if (allCorrectMade && !hasIncorrectConnections) {
       console.log('All stars are connected correctly! Big Dipper constellation complete!');
+      // Mark puzzle as solved
+      puzzleState['blackboard'] = true;
+      // Animate completed star lamps
+      animateCompletedStarLamp('star-lamp-10');
+      animateCompletedStarLamp('star-lamp-11');
+      // Turn on star lamps for next puzzle (zodiac)
+      updateStarLampsForPuzzle('table-2');
       // Show completion message
       showCompletionMessage('Big Dipper');
       return true;
@@ -2344,6 +2553,13 @@ function initSolarSystem() {
     
     if (matchCount === totalControls) {
       console.log('🎉 ALL GREEK ALPHABETS MATCH! All constellation images have their corresponding Greek letters!');
+      // Mark puzzle as solved
+      puzzleState['star-background'] = true;
+      // Animate completed star lamps
+      animateCompletedStarLamp('star-lamp-8');
+      animateCompletedStarLamp('star-lamp-9');
+      // Show completion message
+      showCompletionMessage('Greek Alphabet');
     }
   }
   
@@ -2782,6 +2998,23 @@ function initSolarSystem() {
           distance: 4,
           intensity: 10
         }
+      },
+      {
+        path: 'data/models/stand.glb',
+        position: { x: -5.958, y: 0, z: -13.422 },
+        scale: 1.464
+      },
+      {
+        path: 'data/models/case.glb',
+        position: { x: -5.974, y: 1.777, z: -13.445 },
+        scale: 0.640,
+        rotation: { x: 0, y: 90, z: 0 }
+      },
+      {
+        path: 'data/models/key.glb',
+        position: { x: -5.983, y: 1.789, z: -13.445 },
+        scale: 0.0004,
+        rotation: { x: 0, y: 50, z: 0 }
       }
     ];
     
@@ -2799,6 +3032,7 @@ function initSolarSystem() {
     models.forEach((modelConfig, index) => {
       const modelPath = modelConfig.path;
       const isStarPolyhedron = modelPath === 'data/models/star_polyhedron.glb';
+      const isStarLampToLight = isStarPolyhedron && index >= 7 && index <= 11; // Star lamps 7-11 need both models
       
       // For star polyhedrons, create a parent "star lamp" entity
       let parentEntity;
@@ -2806,19 +3040,6 @@ function initSolarSystem() {
         parentEntity = document.createElement('a-entity');
         parentEntity.setAttribute('id', `star-lamp-${index}`);
         parentEntity.setAttribute('class', 'star-lamp');
-      }
-      
-      const modelEntity = document.createElement('a-entity');
-      
-      // Determine file extension
-      const fileExtension = modelPath.split('.').pop().toLowerCase();
-      
-      if (fileExtension === 'glb' || fileExtension === 'gltf') {
-        // Use gltf-model component for GLB files
-        modelEntity.setAttribute('gltf-model', modelPath);
-      } else if (fileExtension === 'fbx') {
-        // Use fbx-model component from aframe-extras for FBX files
-        modelEntity.setAttribute('fbx-model', modelPath);
       }
       
       // Set position - use specific position if provided, otherwise use circular arrangement
@@ -2840,63 +3061,152 @@ function initSolarSystem() {
       if (isStarPolyhedron) {
         // Position parent at star location
         parentEntity.setAttribute('position', `${x} ${y} ${z}`);
-        // Model is positioned relative to parent
-        modelEntity.setAttribute('position', '0 -0.09 0');
-      } else {
-        // Regular model positioning
-        modelEntity.setAttribute('position', `${x} ${y} ${z}`);
       }
       
-      modelEntity.setAttribute('scale', `${modelConfig.scale} ${modelConfig.scale} ${modelConfig.scale}`);
-      
-      // Set rotation if specified
-      if (modelConfig.rotation) {
-        if (isStarPolyhedron) {
-          // For star polyhedrons, apply rotation to parent so everything rotates together
+      // For star lamps 7-11, create both unlit and lit models
+      if (isStarLampToLight) {
+        // Set rotation on parent if specified
+        if (modelConfig.rotation) {
           parentEntity.setAttribute('rotation', `${modelConfig.rotation.x} ${modelConfig.rotation.y} ${modelConfig.rotation.z}`);
-        } else {
-          // For other models, apply rotation to model entity
-          modelEntity.setAttribute('rotation', `${modelConfig.rotation.x} ${modelConfig.rotation.y} ${modelConfig.rotation.z}`);
         }
-      }
-      
-      // Add light if specified
-      if (modelConfig.hasLight) {
-        const lightEntity = document.createElement('a-light');
-        lightEntity.setAttribute('type', 'point');
         
-        // Use custom light config if provided, otherwise use defaults
-        if (modelConfig.lightConfig) {
+        // Create unlit model (visible initially)
+        const unlitModelEntity = document.createElement('a-entity');
+        unlitModelEntity.setAttribute('gltf-model', 'data/models/star_polyhedron (unlit).glb');
+        unlitModelEntity.setAttribute('position', '0 -0.09 0');
+        unlitModelEntity.setAttribute('scale', `${modelConfig.scale} ${modelConfig.scale} ${modelConfig.scale}`);
+        unlitModelEntity.setAttribute('class', 'star-lamp-unlit');
+        unlitModelEntity.setAttribute('visible', 'true');
+        parentEntity.appendChild(unlitModelEntity);
+        
+        // Create lit model (invisible initially, with light disabled)
+        const litModelEntity = document.createElement('a-entity');
+        litModelEntity.setAttribute('gltf-model', modelPath);
+        litModelEntity.setAttribute('position', '0 -0.09 0');
+        litModelEntity.setAttribute('scale', `${modelConfig.scale} ${modelConfig.scale} ${modelConfig.scale}`);
+        litModelEntity.setAttribute('class', 'star-lamp-lit');
+        litModelEntity.setAttribute('visible', 'false');
+        
+        // Add light but disable it initially
+        if (modelConfig.hasLight && modelConfig.lightConfig) {
+          const lightEntity = document.createElement('a-light');
+          lightEntity.setAttribute('type', 'point');
           lightEntity.setAttribute('position', modelConfig.lightConfig.position || '0 0 0');
           lightEntity.setAttribute('decay', modelConfig.lightConfig.decay !== undefined ? modelConfig.lightConfig.decay : 1);
           lightEntity.setAttribute('distance', modelConfig.lightConfig.distance !== undefined ? modelConfig.lightConfig.distance : 7);
-          lightEntity.setAttribute('intensity', modelConfig.lightConfig.intensity !== undefined ? modelConfig.lightConfig.intensity : 10);
+          lightEntity.setAttribute('intensity', '0'); // Disabled initially
           if (modelConfig.lightConfig.color) {
             lightEntity.setAttribute('color', modelConfig.lightConfig.color);
           } else {
             lightEntity.setAttribute('color', '#ffce7a');
           }
-        } else {
-          // Default light settings for other models
-          lightEntity.setAttribute('position', '0 20.785 -8.241'); // Relative to lamp position
-          lightEntity.setAttribute('color', '#ffce7a');
-          lightEntity.setAttribute('intensity', '10');
-          lightEntity.setAttribute('distance', '7');
+          litModelEntity.appendChild(lightEntity);
         }
         
-        modelEntity.appendChild(lightEntity);
-      }
-      
-      if (isStarPolyhedron) {
-        // Add model to parent, then add parent to scene
-        parentEntity.appendChild(modelEntity);
+        parentEntity.appendChild(litModelEntity);
         scene.appendChild(parentEntity);
         
-        // Store parent reference for cylinder creation
+        // Store references for later use
         modelConfig.parentEntity = parentEntity;
+        modelConfig.unlitModel = unlitModelEntity;
+        modelConfig.litModel = litModelEntity;
       } else {
-        // Add to scene directly
-        scene.appendChild(modelEntity);
+        // For star-lamp-6 and other models, use original logic
+        const modelEntity = document.createElement('a-entity');
+        
+        // Determine file extension
+        const fileExtension = modelPath.split('.').pop().toLowerCase();
+        
+        if (fileExtension === 'glb' || fileExtension === 'gltf') {
+          // Use gltf-model component for GLB files
+          modelEntity.setAttribute('gltf-model', modelPath);
+          
+          // Set emissive white material for key.glb
+          if (modelPath === 'data/models/key.glb') {
+            modelEntity.addEventListener('model-loaded', function() {
+              const THREE = AFRAME.THREE;
+              const object3D = modelEntity.object3D;
+              
+              // Traverse the object3D tree to find and modify all materials
+              object3D.traverse(function(child) {
+                if (child.material) {
+                  const materials = Array.isArray(child.material) ? child.material : [child.material];
+                  materials.forEach(function(material) {
+                    // Set emissive to white
+                    material.emissive = new THREE.Color(0xffffff);
+                    material.emissiveIntensity = 0.3;
+                    material.needsUpdate = true;
+                  });
+                }
+              });
+              
+              console.log('Key model loaded, emissive white material applied');
+            });
+          }
+        } else if (fileExtension === 'fbx') {
+          // Use fbx-model component from aframe-extras for FBX files
+          modelEntity.setAttribute('fbx-model', modelPath);
+        }
+        
+        if (isStarPolyhedron) {
+          // Model is positioned relative to parent
+          modelEntity.setAttribute('position', '0 -0.09 0');
+        } else {
+          // Regular model positioning
+          modelEntity.setAttribute('position', `${x} ${y} ${z}`);
+        }
+        
+        modelEntity.setAttribute('scale', `${modelConfig.scale} ${modelConfig.scale} ${modelConfig.scale}`);
+        
+        // Set rotation if specified
+        if (modelConfig.rotation) {
+          if (isStarPolyhedron) {
+            // For star polyhedrons, apply rotation to parent so everything rotates together
+            parentEntity.setAttribute('rotation', `${modelConfig.rotation.x} ${modelConfig.rotation.y} ${modelConfig.rotation.z}`);
+          } else {
+            // For other models, apply rotation to model entity
+            modelEntity.setAttribute('rotation', `${modelConfig.rotation.x} ${modelConfig.rotation.y} ${modelConfig.rotation.z}`);
+          }
+        }
+        
+        // Add light if specified
+        if (modelConfig.hasLight) {
+          const lightEntity = document.createElement('a-light');
+          lightEntity.setAttribute('type', 'point');
+          
+          // Use custom light config if provided, otherwise use defaults
+          if (modelConfig.lightConfig) {
+            lightEntity.setAttribute('position', modelConfig.lightConfig.position || '0 0 0');
+            lightEntity.setAttribute('decay', modelConfig.lightConfig.decay !== undefined ? modelConfig.lightConfig.decay : 1);
+            lightEntity.setAttribute('distance', modelConfig.lightConfig.distance !== undefined ? modelConfig.lightConfig.distance : 7);
+            lightEntity.setAttribute('intensity', modelConfig.lightConfig.intensity !== undefined ? modelConfig.lightConfig.intensity : 10);
+            if (modelConfig.lightConfig.color) {
+              lightEntity.setAttribute('color', modelConfig.lightConfig.color);
+            } else {
+              lightEntity.setAttribute('color', '#ffce7a');
+            }
+          } else {
+            // Default light settings for other models
+            lightEntity.setAttribute('position', '0 20.785 -8.241'); // Relative to lamp position
+            lightEntity.setAttribute('color', '#ffce7a');
+            lightEntity.setAttribute('intensity', '10');
+            lightEntity.setAttribute('distance', '7');
+          }
+          
+          modelEntity.appendChild(lightEntity);
+        }
+        
+        if (isStarPolyhedron) {
+          // Add model to parent, then add parent to scene
+          parentEntity.appendChild(modelEntity);
+          scene.appendChild(parentEntity);
+          
+          // Store parent reference for cylinder creation
+          modelConfig.parentEntity = parentEntity;
+        } else {
+          // Add to scene directly
+          scene.appendChild(modelEntity);
+        }
       }
       
       console.log(`Loaded model: ${modelPath} at position (${x}, ${y}, ${z}) with scale ${modelConfig.scale}`);
