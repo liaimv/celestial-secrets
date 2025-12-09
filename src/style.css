@@ -90,59 +90,32 @@ a-text {
   position: fixed;
   bottom: 20vh;
   right: 20vw;
-  background-color: rgba(0, 0, 0, 0.5);
-  padding: 15px 20px;
+  background-color: #ffffff;
+  padding: 20px 30px;
   border-radius: 8px;
+  border: none;
   z-index: 2147483647 !important;
   transition: opacity 0.3s ease;
-  pointer-events: auto;
+  pointer-events: none;
+  cursor: default;
   transform: translateZ(0);
   will-change: transform;
   isolation: isolate;
 }
 
 .proximity-ui.hidden {
-  opacity: 0;
+  opacity: 0 !important;
   pointer-events: none;
-  visibility: hidden;
+  visibility: hidden !important;
 }
 
-.proximity-ui-content {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
-.proximity-key-indicator {
-  width: 40px;
-  height: 40px;
-  background-color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  flex-shrink: 0;
-}
-
-.key-letter {
-  color: #000000;
-  font-size: 20px;
-  font-weight: bold;
-  font-family: 'Fondamento', serif;
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-user-drag: none;
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
-  user-drag: none;
+.proximity-ui:disabled {
+  /* Disabled state - opacity controlled by .hidden class */
 }
 
 .proximity-text {
-  color: #ffffff;
-  font-size: 18px;
+  color: #000000;
+  font-size: 36px;
   font-family: 'Fondamento', serif;
   white-space: nowrap;
   user-select: none;
@@ -204,8 +177,164 @@ a-text {
   background-color: #000000;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 1.5s ease-in;
+  transition: opacity 1s ease-in;
   z-index: 999999;
+}
+
+#fade-overlay.fade-in {
+  opacity: 1;
+}
+
+/* End Game Text Styles */
+.end-game-text {
+  color: #ffffff;
+  font-size: 35px;
+  font-family: 'Fondamento', serif;
+  text-align: center;
+  max-width: 80vw;
+  padding: 40px;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1.8;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+.end-game-text.fade-in {
+  opacity: 1;
+}
+
+.end-game-text.fade-out {
+  opacity: 0;
+}
+
+.end-game-text.hidden {
+  display: none;
+}
+
+.end-game-text p {
+  margin-bottom: 20px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+.end-game-text p:last-of-type {
+  margin-bottom: 40px;
+}
+
+.end-game-button {
+  position: fixed;
+  bottom: 40px;
+  right: 40px;
+  background-color: #ffffff;
+  color: #000000;
+  border: none;
+  padding: 15px 40px;
+  border-radius: 8px;
+  font-size: 24px;
+  font-family: 'Fondamento', serif;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 1s ease-in-out;
+  z-index: 10000001;
+  opacity: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+.end-game-button.fade-in {
+  opacity: 1;
+}
+
+.end-game-button.fade-out {
+  opacity: 0;
+}
+
+.end-game-button.hidden {
+  display: none;
+}
+
+.end-game-button:hover {
+  background-color: #ffff00;
+}
+
+.end-game-final-text {
+  color: #ffffff;
+  font-size: 35px;
+  font-family: 'Fondamento', serif;
+  text-align: center;
+  max-width: 80vw;
+  padding: 40px;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  line-height: 1.8;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+.end-game-final-text.fade-in {
+  opacity: 1;
+}
+
+.end-game-final-text.fade-out {
+  opacity: 0;
+}
+
+.end-game-final-text.hidden {
+  display: none;
+}
+
+.end-game-final-text p {
+  margin-bottom: 20px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
+}
+
+.end-game-final-text .small-text {
+  font-size: 24px;
 }
 
 /* Guide Button */
@@ -590,6 +719,46 @@ a-text {
 
 .start-button:hover {
   background-color: #ffff00;
+}
+
+/* Key Message UI */
+.key-message-ui {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(0);
+  background-color: rgba(0, 0, 0, 0.8);
+  padding: 30px 50px;
+  border-radius: 12px;
+  border: 2px solid #ffffff;
+  z-index: 2147483647 !important;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  cursor: default;
+  will-change: transform;
+  isolation: isolate;
+}
+
+.key-message-ui.hidden {
+  opacity: 0 !important;
+  pointer-events: none;
+  visibility: hidden !important;
+}
+
+.key-message-text {
+  color: #ffffff;
+  font-size: 36px;
+  font-family: 'Fondamento', serif;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-drag: none;
+  -khtml-user-drag: none;
+  -moz-user-drag: none;
+  -o-user-drag: none;
+  user-drag: none;
 }
 
 /* Completion Message Entity */

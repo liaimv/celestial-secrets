@@ -15,6 +15,7 @@ function initIntroSequence() {
   }
   
   let isFirstStory = true;
+  let isButtonTransitioning = false;
   
   // After 2 seconds, fade out title and fade in first story
   setTimeout(() => {
@@ -24,15 +25,37 @@ function initIntroSequence() {
     setTimeout(() => {
       introStory.classList.remove('hidden');
       startButton.classList.remove('hidden');
+      // Keep button disabled during fade-in
+      startButton.style.pointerEvents = 'none';
       setTimeout(() => {
         introStory.classList.add('fade-in');
         startButton.classList.add('fade-in');
+        // Enable button only after fade-in transition completes (1 second)
+        setTimeout(() => {
+          startButton.style.pointerEvents = 'auto';
+          isButtonTransitioning = false;
+        }, 1000);
       }, 100);
     }, 500);
   }, 2000);
   
   // Handle button click
-  startButton.addEventListener('click', () => {
+  startButton.addEventListener('click', (e) => {
+    // Prevent click if button is transitioning or not fully visible
+    if (isButtonTransitioning || 
+        !startButton.classList.contains('fade-in') || 
+        startButton.classList.contains('fade-out') ||
+        startButton.style.pointerEvents === 'none' ||
+        window.getComputedStyle(startButton).opacity !== '1') {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    }
+    
+    // Set transitioning flag immediately
+    isButtonTransitioning = true;
+    startButton.style.pointerEvents = 'none';
+    
     if (isFirstStory) {
       // Fade out first story and button together
       introStory.classList.remove('fade-in');
@@ -46,9 +69,16 @@ function initIntroSequence() {
         startButton.textContent = 'START';
         startButton.classList.remove('fade-out');
         introStory2.classList.remove('hidden');
+        // Keep button disabled during fade-in
+        startButton.style.pointerEvents = 'none';
         setTimeout(() => {
           introStory2.classList.add('fade-in');
           startButton.classList.add('fade-in');
+          // Enable button only after fade-in transition completes (1 second)
+          setTimeout(() => {
+            startButton.style.pointerEvents = 'auto';
+            isButtonTransitioning = false;
+          }, 1000);
         }, 100);
       }, 1000);
       
@@ -318,6 +348,130 @@ AFRAME.registerComponent('camera-bounds', {
     }
   }
 });
+
+// Randomize planet assignments while keeping positions the same
+function randomizePlanetAssignments() {
+  // Planet data: name, correct ring radius, visual radius, texture path, isSaturn
+  const planetData = {
+    'mercury': { correctRadius: 0.25, visualRadius: 0.015, texture: 'data/planet_textures/Mercury.jpg', isSaturn: false },
+    'venus': { correctRadius: 0.35, visualRadius: 0.031, texture: 'data/planet_textures/Venus.jpg', isSaturn: false },
+    'earth': { correctRadius: 0.45, visualRadius: 0.033, texture: 'data/planet_textures/Earth.jpg', isSaturn: false },
+    'mars': { correctRadius: 0.55, visualRadius: 0.021, texture: 'data/planet_textures/Mars.jpg', isSaturn: false },
+    'jupiter': { correctRadius: 0.7, visualRadius: 0.0814, texture: 'data/planet_textures/Jupiter.jpg', isSaturn: false },
+    'saturn': { correctRadius: 0.85, visualRadius: 0.06, texture: 'data/planet_textures/Saturn.jpg', isSaturn: true },
+    'uranus': { correctRadius: 1, visualRadius: 0.052, texture: 'data/planet_textures/Uranus.jpg', isSaturn: false },
+    'neptune': { correctRadius: 1.15, visualRadius: 0.051, texture: 'data/planet_textures/Neptune.jpg', isSaturn: false }
+  };
+  
+  // Get all planet elements (both spheres and entities)
+  const planetElements = Array.from(document.querySelectorAll('[data-planet]'));
+  
+  if (planetElements.length !== 8) {
+    console.warn('Expected 8 planets, found', planetElements.length);
+    return;
+  }
+  
+  // Create array of planet names and shuffle them
+  const planetNames = Object.keys(planetData);
+  const shuffledPlanets = [...planetNames].sort(() => Math.random() - 0.5);
+  
+  // Assign shuffled planets to each position
+  planetElements.forEach((element, index) => {
+    const assignedPlanet = shuffledPlanets[index];
+    const planetInfo = planetData[assignedPlanet];
+    
+    // Update data-planet and data-radius attributes
+    element.setAttribute('data-planet', assignedPlanet);
+    element.setAttribute('data-radius', planetInfo.correctRadius);
+    
+    // Handle Saturn specially (it needs to be an entity with torus rings)
+    if (planetInfo.isSaturn) {
+      // If this element is not already an entity, we need to convert it
+      if (element.tagName === 'A-SPHERE') {
+        // Create new entity to replace the sphere
+        const pos = element.getAttribute('position');
+        const posStr = typeof pos === 'object' ? `${pos.x} ${pos.y} ${pos.z}` : pos;
+        const newEntity = document.createElement('a-entity');
+        newEntity.setAttribute('data-planet', assignedPlanet);
+        newEntity.setAttribute('data-radius', planetInfo.correctRadius);
+        newEntity.setAttribute('data-ring-index', element.getAttribute('data-ring-index'));
+        newEntity.setAttribute('class', 'draggable');
+        newEntity.setAttribute('position', posStr);
+        
+        // Create Saturn sphere
+        const saturnSphere = document.createElement('a-sphere');
+        saturnSphere.setAttribute('position', '0 0 0');
+        saturnSphere.setAttribute('radius', planetInfo.visualRadius);
+        saturnSphere.setAttribute('src', planetInfo.texture);
+        const rotationAnim = document.createElement('a-animation');
+        rotationAnim.setAttribute('attribute', 'rotation');
+        rotationAnim.setAttribute('to', '0 360 0');
+        rotationAnim.setAttribute('dur', '4000');
+        rotationAnim.setAttribute('repeat', 'indefinite');
+        saturnSphere.appendChild(rotationAnim);
+        newEntity.appendChild(saturnSphere);
+        
+        // Add Saturn's rings (25 torus rings)
+        const ringColors = ['#F5E6D3', '#E8D5C0', '#FFF8E7', '#D2B48C', '#FDF5E6', '#C9A882', '#EDE0D0', '#E3D0BB', '#B8956A', '#FAF0E6', '#DDC5B0', '#F0E6D2', '#C4A37A', '#D8C0A5', '#FFF8E7', '#BF9E72', '#E8D5C0', '#CDB48C', '#F5E6D3', '#B3905A', '#D2B48C', '#FFF8E7', '#E3D0BB', '#A0825D', '#FDF5E6'];
+        const ringRadii = [0.082, 0.083, 0.085, 0.087, 0.088, 0.09, 0.092, 0.093, 0.095, 0.097, 0.099, 0.10, 0.102, 0.104, 0.105, 0.107, 0.109, 0.11, 0.112, 0.114, 0.116, 0.117, 0.119, 0.121, 0.122];
+        ringRadii.forEach((radius, i) => {
+          const torus = document.createElement('a-torus');
+          torus.setAttribute('position', '0 0 0');
+          torus.setAttribute('rotation', '-90 0 0');
+          torus.setAttribute('radius', radius);
+          torus.setAttribute('radius-tubular', '0.003');
+          torus.setAttribute('scale', '1 1 0.1');
+          torus.setAttribute('segments-tubular', '70');
+          torus.setAttribute('color', ringColors[i]);
+          torus.setAttribute('arc', '360');
+          newEntity.appendChild(torus);
+        });
+        
+        // Replace the sphere with the entity
+        element.parentNode.replaceChild(newEntity, element);
+      } else {
+        // Already an entity, just update the sphere inside and keep rings
+        const sphere = element.querySelector('a-sphere');
+        if (sphere) {
+          sphere.setAttribute('radius', planetInfo.visualRadius);
+          sphere.setAttribute('src', planetInfo.texture);
+        }
+      }
+    } else {
+      // Not Saturn - should be a sphere
+      if (element.tagName === 'A-ENTITY') {
+        // Convert entity to sphere (remove Saturn rings)
+        const pos = element.getAttribute('position');
+        const posStr = typeof pos === 'object' ? `${pos.x} ${pos.y} ${pos.z}` : pos;
+        const ringIndex = element.getAttribute('data-ring-index');
+        const newSphere = document.createElement('a-sphere');
+        newSphere.setAttribute('data-planet', assignedPlanet);
+        newSphere.setAttribute('data-radius', planetInfo.correctRadius);
+        newSphere.setAttribute('data-ring-index', ringIndex);
+        newSphere.setAttribute('class', 'draggable');
+        newSphere.setAttribute('position', posStr);
+        newSphere.setAttribute('radius', planetInfo.visualRadius);
+        newSphere.setAttribute('src', planetInfo.texture);
+        const rotationAnim = document.createElement('a-animation');
+        rotationAnim.setAttribute('attribute', 'rotation');
+        rotationAnim.setAttribute('to', '0 360 0');
+        rotationAnim.setAttribute('dur', '5000');
+        rotationAnim.setAttribute('repeat', 'indefinite');
+        newSphere.appendChild(rotationAnim);
+        element.parentNode.replaceChild(newSphere, element);
+      } else {
+        // Already a sphere, just update attributes
+        element.setAttribute('radius', planetInfo.visualRadius);
+        element.setAttribute('src', planetInfo.texture);
+        // Update animation duration (optional, for variety)
+        const anim = element.querySelector('a-animation');
+        if (anim) {
+          anim.setAttribute('dur', (5000 + Math.random() * 5000).toString());
+        }
+      }
+    }
+  });
+}
 
 function initSolarSystem() {
   const scene = document.querySelector('a-scene');
@@ -589,6 +743,7 @@ function initSolarSystem() {
   let isNearCase = false;
   let currentTable = null; // Track which table we're near ('solar-system', 'table-2', 'blackboard', 'star-background', 'door', or 'case')
   const PROXIMITY_THRESHOLD = 4; // Distance threshold to show UI
+  let isGameEnded = false; // Flag to prevent UI from showing after fade to black
   
   // Door/Key/Case state
   let hasKey = false;
@@ -613,6 +768,10 @@ function initSolarSystem() {
   let completionMessageUI = null;
   let completionText = null;
   let completionMessageTimeout = null;
+  
+  // Key message UI state (HTML UI)
+  let keyMessageUI = null;
+  let keyMessageTimeout = null;
   
   // Guide button UI state
   let guideButton = null;
@@ -1615,6 +1774,11 @@ function initSolarSystem() {
   function handleKeyPress(e) {
     // Check if E key is pressed
     if (e.key === 'e' || e.key === 'E') {
+      // Ignore E key when in puzzle solve mode - nothing should happen
+      if (isTopDownView || isBlackboardView || isStarBackgroundView) {
+        return;
+      }
+      
       console.log('E key pressed - isNearSolarSystem:', isNearSolarSystem, 'isNearTable2:', isNearTable2, 'isNearBlackboard:', isNearBlackboard, 'isNearStarBackground:', isNearStarBackground, 'isNearDoor:', isNearDoor, 'isNearCase:', isNearCase, 'hasKey:', hasKey, 'currentTable:', currentTable, 'isTopDownView:', isTopDownView, 'isBlackboardView:', isBlackboardView, 'isStarBackgroundView:', isStarBackgroundView);
       
       // Check for door/case interactions first (only when not in special views)
@@ -1650,10 +1814,8 @@ function initSolarSystem() {
         }
       }
       
-      // Check if in any special view (top-down, blackboard, or star background)
-      if (isTopDownView || isBlackboardView || isStarBackgroundView) {
-        switchToOriginalView();
-      } else {
+      // Enter puzzle mode (only when not already in puzzle mode - checked at top of function)
+      {
         // Get the next available puzzle
         const nextAvailablePuzzle = getNextAvailablePuzzle();
         const isCurrentPuzzleAvailable = currentTable === nextAvailablePuzzle && !puzzleState[currentTable];
@@ -1749,16 +1911,7 @@ function initSolarSystem() {
   
   // Initialize proximity UI
   function initProximityUI() {
-    // Try A-Frame entity first (works in fullscreen)
-    proximityUI = document.getElementById('proximity-ui-entity');
-    if (proximityUI) {
-      console.log('Using A-Frame entity for proximity UI');
-      // Start checking proximity
-      checkProximity();
-      return;
-    }
-    
-    // Fallback to HTML element
+    // Use HTML-based proximity UI (screen overlay, not affected by lighting)
     proximityUI = document.getElementById('proximity-ui');
     if (!proximityUI) {
       console.warn('Proximity UI element not found - will retry');
@@ -1774,9 +1927,8 @@ function initSolarSystem() {
       document.body.appendChild(proximityUI);
     }
     
-    // Force display style to ensure it's visible
-    proximityUI.style.display = 'block';
-    proximityUI.style.visibility = 'visible';
+    // Ensure UI starts hidden (will be shown by checkProximity when needed)
+    proximityUI.classList.add('hidden');
     
     // Start checking proximity
     checkProximity();
@@ -1798,6 +1950,23 @@ function initSolarSystem() {
     // Retry after a short delay in case DOM isn't ready
     setTimeout(() => {
       initCompletionMessageUI();
+    }, 200);
+  }
+  
+  // Initialize Key Message UI (HTML UI)
+  function initKeyMessageUI() {
+    keyMessageUI = document.getElementById('key-message-ui');
+    if (keyMessageUI) {
+      console.log('Key message UI initialized');
+      // Initially hide
+      keyMessageUI.classList.add('hidden');
+      return;
+    }
+    
+    console.warn('Key message UI element not found - will retry');
+    // Retry after a short delay in case DOM isn't ready
+    setTimeout(() => {
+      initKeyMessageUI();
     }, 200);
   }
   
@@ -1833,7 +2002,7 @@ function initSolarSystem() {
       if (topDownViewTableId === 'table-2') {
         return 'Drag each zodiac sign object to its matching element.';
       } else {
-        return 'Drag the planets into the correct order from the Sun.';
+        return 'Drag each planet onto its corresponding ring in the correct order from the Sun.';
       }
     } else if (isBlackboardView) {
       return 'Draw the correct southern hemisphere star constellation. Click two stars to connect them. Click a line to remove it.';
@@ -1911,38 +2080,65 @@ function initSolarSystem() {
       clearTimeout(completionMessageTimeout);
       completionMessageTimeout = null;
     }
+    // Also hide key message UI if it's showing
+    if (keyMessageUI) {
+      keyMessageUI.classList.add('hidden');
+    }
+    if (keyMessageTimeout) {
+      clearTimeout(keyMessageTimeout);
+      keyMessageTimeout = null;
+    }
   }
   
   // Show temporary message (similar to completion message but for general messages)
   function showTemporaryMessage(message) {
-    if (!completionMessageUI || !completionText) {
+    // Use HTML UI for key message
+    if (!keyMessageUI) {
       // Try to initialize if not already done
-      initCompletionMessageUI();
-      if (!completionMessageUI || !completionText) {
-        console.warn('Completion message UI not available');
+      initKeyMessageUI();
+      if (!keyMessageUI) {
+        console.warn('Key message UI not available');
         return;
       }
     }
     
     // Set the message text
-    completionText.setAttribute('value', message);
+    const keyMessageText = keyMessageUI.querySelector('.key-message-text');
+    if (keyMessageText) {
+      keyMessageText.textContent = message;
+    }
     
     // Show the message
-    completionMessageUI.setAttribute('visible', 'true');
+    keyMessageUI.classList.remove('hidden');
     
     // Hide after 2 seconds
-    if (completionMessageTimeout) {
-      clearTimeout(completionMessageTimeout);
+    if (keyMessageTimeout) {
+      clearTimeout(keyMessageTimeout);
     }
-    completionMessageTimeout = setTimeout(() => {
-      if (completionMessageUI) {
-        completionMessageUI.setAttribute('visible', 'false');
+    keyMessageTimeout = setTimeout(() => {
+      if (keyMessageUI) {
+        keyMessageUI.classList.add('hidden');
       }
     }, 2000);
   }
   
+  // End game button transition state (global scope)
+  let isEndGameButtonTransitioning = false;
+  
   // Fade screen to black using CSS overlay
   function fadeToBlack() {
+    // Set game ended flag to prevent proximity UI from showing
+    isGameEnded = true;
+    
+    // Hide proximity UI when unlocking door
+    if (proximityUI) {
+      if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
+        proximityUI.setAttribute('visible', 'false');
+      } else {
+        proximityUI.classList.add('hidden');
+      }
+    }
+    
     // Get or create fade overlay div
     let fadeOverlay = document.getElementById('fade-overlay');
     if (!fadeOverlay) {
@@ -1950,15 +2146,113 @@ function initSolarSystem() {
       fadeOverlay = document.createElement('div');
       fadeOverlay.setAttribute('id', 'fade-overlay');
       document.body.appendChild(fadeOverlay);
+      
+      // Create end game text elements
+      const endGameText = document.createElement('div');
+      endGameText.setAttribute('id', 'end-game-text');
+      endGameText.className = 'end-game-text hidden';
+      endGameText.innerHTML = '<p>The door clicks open, revealing the way out. You step forward, the legacy of your mentor now in your hands.</p>';
+      fadeOverlay.appendChild(endGameText);
+      
+      // Create NEXT button
+      const endGameButton = document.createElement('button');
+      endGameButton.setAttribute('id', 'end-game-button');
+      endGameButton.className = 'end-game-button hidden';
+      endGameButton.textContent = 'NEXT';
+      fadeOverlay.appendChild(endGameButton);
+      
+      // Create final text
+      const endGameFinalText = document.createElement('div');
+      endGameFinalText.setAttribute('id', 'end-game-final-text');
+      endGameFinalText.className = 'end-game-final-text hidden';
+      endGameFinalText.innerHTML = '<p>Thank you for playing!</p><p>Reload the page to play again!</p>';
+      fadeOverlay.appendChild(endGameFinalText);
+      
+      // Handle NEXT button click (only add listener once)
+      if (!endGameButton.hasAttribute('data-listener-added')) {
+        endGameButton.setAttribute('data-listener-added', 'true');
+        endGameButton.addEventListener('click', (e) => {
+        // Prevent click if button is transitioning or not fully visible
+        if (isEndGameButtonTransitioning || 
+            !endGameButton.classList.contains('fade-in') || 
+            endGameButton.classList.contains('fade-out') ||
+            endGameButton.style.pointerEvents === 'none') {
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+        
+        // Set transitioning flag immediately
+        isEndGameButtonTransitioning = true;
+        endGameButton.style.pointerEvents = 'none';
+        
+        // Fade out first text and button
+        endGameText.classList.remove('fade-in');
+        endGameText.classList.add('fade-out');
+        endGameButton.classList.remove('fade-in');
+        endGameButton.classList.add('fade-out');
+        
+        // After fade out completes, fade in final text
+        setTimeout(() => {
+          endGameText.classList.add('hidden');
+          endGameButton.classList.add('hidden');
+          endGameFinalText.classList.remove('hidden');
+          setTimeout(() => {
+            endGameFinalText.classList.add('fade-in');
+          }, 100);
+        }, 1000);
+        });
+      }
     }
     
-    // Reset opacity to 0
-    fadeOverlay.style.opacity = '0';
+    // Get references to end game elements
+    const endGameText = document.getElementById('end-game-text');
+    const endGameButton = document.getElementById('end-game-button');
+    const endGameFinalText = document.getElementById('end-game-final-text');
     
-    // Trigger fade by setting opacity to 1 (CSS transition will handle the animation)
+    // Reset all elements
+    if (endGameText) {
+      endGameText.classList.remove('fade-in', 'fade-out');
+      endGameText.classList.add('hidden');
+    }
+    if (endGameButton) {
+      endGameButton.classList.remove('fade-in', 'fade-out');
+      endGameButton.classList.add('hidden');
+      endGameButton.style.pointerEvents = 'none';
+      isEndGameButtonTransitioning = false;
+    }
+    if (endGameFinalText) {
+      endGameFinalText.classList.remove('fade-in', 'fade-out');
+      endGameFinalText.classList.add('hidden');
+    }
+    
+    // Remove fade-in class to reset overlay
+    fadeOverlay.classList.remove('fade-in');
+    
     // Use requestAnimationFrame to ensure the reset is applied first
     requestAnimationFrame(() => {
-      fadeOverlay.style.opacity = '1';
+      // Add fade-in class to trigger the fade (CSS transition will handle the animation)
+      fadeOverlay.classList.add('fade-in');
+      
+      // After fade completes (1 second), show first text and button
+      setTimeout(() => {
+        if (endGameText) {
+          endGameText.classList.remove('hidden');
+          setTimeout(() => {
+            endGameText.classList.add('fade-in');
+          }, 100);
+        }
+        if (endGameButton) {
+          endGameButton.classList.remove('hidden');
+          setTimeout(() => {
+            endGameButton.classList.add('fade-in');
+            // Enable button after fade-in completes
+            setTimeout(() => {
+              endGameButton.style.pointerEvents = 'auto';
+            }, 1000);
+          }, 100);
+        }
+      }, 1000);
     });
     
     console.log('Fading to black...');
@@ -1978,18 +2272,13 @@ function initSolarSystem() {
       textValue = 'Solve Puzzle';
     }
     
-    // Update the text element in proximity-ui-entity
-    if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
-      const textElement = proximityUI.querySelector('a-text[position="0.245 -0.28 -0.48"]');
-      if (textElement) {
-        textElement.setAttribute('value', textValue);
-      }
-    } else {
-      // For HTML-based UI
-      const textSpan = proximityUI.querySelector('.proximity-text');
-      if (textSpan) {
-        textSpan.textContent = textValue;
-      }
+    // Combine "E " with the action text
+    const combinedText = 'E ' + textValue;
+    
+    // Update the HTML-based proximity UI text
+    const textSpan = proximityUI.querySelector('.proximity-text');
+    if (textSpan) {
+      textSpan.textContent = combinedText;
     }
   }
   
@@ -2108,20 +2397,13 @@ function initSolarSystem() {
     const shouldShowUI = isNearDoor || isNearCase || ((isNearSolarSystem || isNearTable2 || isNearBlackboard || isNearStarBackground) && isCurrentPuzzleAvailable);
     
     // Show/hide UI based on current state (not just on entry/exit)
-    if (shouldShowUI && !isTopDownView && !isBlackboardView && !isStarBackgroundView) {
-      // Show UI if we should show it and not in special views - always update visibility
-      if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
-        proximityUI.setAttribute('visible', 'true');
-      } else {
-        proximityUI.classList.remove('hidden');
-      }
+    // Only show when near interactables AND not in puzzle solve mode AND game hasn't ended
+    if (shouldShowUI && !isTopDownView && !isBlackboardView && !isStarBackgroundView && !isGameEnded) {
+      // Show UI if we should show it and not in puzzle solve mode
+      proximityUI.classList.remove('hidden');
     } else {
-      // Hide UI if we shouldn't show it or in special views
-      if (proximityUI.tagName && proximityUI.tagName.toLowerCase() === 'a-entity') {
-        proximityUI.setAttribute('visible', 'false');
-      } else {
-        proximityUI.classList.add('hidden');
-      }
+      // Hide UI if we shouldn't show it or in puzzle solve mode or game has ended
+      proximityUI.classList.add('hidden');
       if (!shouldShowUI) {
         currentTable = null;
       }
@@ -3095,23 +3377,52 @@ function initSolarSystem() {
     lineElement.remove();
   }
   
+  // Clear constellation hover states
+  function clearConstellationHover() {
+    if (hoveredStar && hoveredStar !== firstSelectedStar) {
+      hoveredStar.setAttribute('color', '#FFFF00');
+      hoveredStar.setAttribute('emissive', '#FFFF00');
+      hoveredStar = null;
+    }
+    if (hoveredLine) {
+      hoveredLine.setAttribute('color', '#FFFF00');
+      hoveredLine = null;
+    }
+  }
+  
   // Handle constellation hover (for stars and lines)
   function handleConstellationHover(event) {
     // Only handle hover when in camera lock mode (blackboard view) and puzzle not solved
-    if ((!isBlackboardView && !window.isBlackboardView) || puzzleState['blackboard']) return;
+    if ((!isBlackboardView && !window.isBlackboardView) || puzzleState['blackboard']) {
+      // Clear hover states when exiting blackboard view or puzzle is solved
+      clearConstellationHover();
+      return;
+    }
     
     const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
-    if (!THREE) return;
+    if (!THREE) {
+      clearConstellationHover();
+      return;
+    }
     
     const cameraEl = scene.querySelector('a-camera');
-    if (!cameraEl || !cameraEl.object3D) return;
+    if (!cameraEl || !cameraEl.object3D) {
+      clearConstellationHover();
+      return;
+    }
     
     const camera = cameraEl.getObject3D('camera');
-    if (!camera) return;
+    if (!camera) {
+      clearConstellationHover();
+      return;
+    }
     
     // Get renderer from scene
     const renderer = scene.renderer || (scene.systems && scene.systems.renderer && scene.systems.renderer.renderer);
-    if (!renderer || !renderer.domElement) return;
+    if (!renderer || !renderer.domElement) {
+      clearConstellationHover();
+      return;
+    }
     
     // Initialize mouse if needed
     if (!mouse) {
@@ -3120,6 +3431,12 @@ function initSolarSystem() {
     
     // Normalize mouse coordinates
     const rect = renderer.domElement.getBoundingClientRect();
+    // Check if mouse is outside canvas bounds
+    if (event.clientX < rect.left || event.clientX > rect.right || 
+        event.clientY < rect.top || event.clientY > rect.bottom) {
+      clearConstellationHover();
+      return;
+    }
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
     
@@ -3433,7 +3750,7 @@ function initSolarSystem() {
       } else {
         // Second star clicked
         if (firstSelectedStar === clickedStar) {
-          // Same star clicked - deselect and turn back to white
+          // Same star clicked - deselect and turn back to yellow
           firstSelectedStar.setAttribute('color', '#FFFF00'); // Reset to yellow
           firstSelectedStar.setAttribute('emissive', '#FFFF00'); // Reset emissive
           firstSelectedStar = null;
@@ -3462,9 +3779,11 @@ function initSolarSystem() {
             console.log('Connection already exists');
           }
           
-          // Reset first star back to white after connection is made
+          // Reset both stars back to yellow after connection is made
           firstSelectedStar.setAttribute('color', '#FFFF00'); // Reset to yellow
           firstSelectedStar.setAttribute('emissive', '#FFFF00'); // Reset emissive
+          clickedStar.setAttribute('color', '#FFFF00'); // Ensure second star is yellow (not cyan)
+          clickedStar.setAttribute('emissive', '#FFFF00'); // Reset emissive
           firstSelectedStar = null;
         }
       }
@@ -3524,6 +3843,8 @@ function initSolarSystem() {
     window.addEventListener('mousedown', handleConstellationStarClick);
     // Add hover event listener for constellation stars and lines
     window.addEventListener('mousemove', handleConstellationHover);
+    // Add mouseleave handler to clear hover states when mouse leaves window
+    window.addEventListener('mouseleave', clearConstellationHover);
     console.log('Constellation game initialized');
   }
   
@@ -4079,9 +4400,13 @@ function initSolarSystem() {
   if (scene) {
     // Function to initialize everything
     function initialize() {
+      // Randomize planet assignments after scene loads
+      randomizePlanetAssignments();
+      
       attachEventListeners();
       initProximityUI();
       initCompletionMessageUI();
+      initKeyMessageUI();
       initGuideButtonUI();
       replaceSpheresWithZodiacSymbols();
       initDragAndDrop();
@@ -4108,6 +4433,7 @@ function initSolarSystem() {
       attachEventListeners();
       initProximityUI();
       initCompletionMessageUI();
+      initKeyMessageUI();
       initGuideButtonUI();
       replaceSpheresWithZodiacSymbols();
       initDragAndDrop();

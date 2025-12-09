@@ -72,27 +72,6 @@
     
     <!-- Camera (inside room, looking at table) -->
     <a-camera position="0 2.5 -13.455" rotation="0 0 0" camera-bounds>
-      <!-- Proximity UI as A-Frame entity (bottom right of screen) -->
-      <a-entity id="proximity-ui-entity" class="proximity-ui-entity" visible="false">
-        <!-- E text in white -->
-        <a-text 
-          position="0.22 -0.28 -0.48" 
-          value="E" 
-          align="center" 
-          color="#ffffff" 
-          width="0.3"
-          font="roboto">
-        </a-text>
-        <!-- Solve Puzzle text in white -->
-        <a-text 
-          position="0.245 -0.28 -0.48" 
-          value="Solve Puzzle" 
-          align="left" 
-          color="#ffffff" 
-          width="0.4"
-          font="roboto">
-        </a-text>
-      </a-entity>
       <!-- Completion Message UI as A-Frame entity (center of screen) -->
       <a-entity id="completion-message-entity" class="completion-message-entity" visible="false">
         <a-text 
@@ -244,13 +223,13 @@
   </a-scene>
   
   <!-- Proximity UI -->
-  <div id="proximity-ui" class="proximity-ui hidden">
-    <div class="proximity-ui-content">
-      <div class="proximity-key-indicator">
-        <span class="key-letter">E</span>
-      </div>
-      <span class="proximity-text">Solve Puzzle</span>
-    </div>
+  <button id="proximity-ui" class="proximity-ui hidden" disabled>
+    <span class="proximity-text">E Solve Puzzle</span>
+  </button>
+  
+  <!-- Key Message UI -->
+  <div id="key-message-ui" class="key-message-ui hidden">
+    <span class="key-message-text">Key needed to unlock door</span>
   </div>
   
   <!-- Guide Button (shown in puzzle mode) -->
@@ -268,10 +247,12 @@
     <div id="intro-title" class="intro-title">CELESTIAL SECRETS</div>
     <div id="intro-story" class="intro-story hidden">
       <p>After decades of studying under a renowned astronomer, you inherit his old manor following his passing. When you step into his private study, you discover a note that reads:</p>
-      <div style="height: 40px;"></div>
+      <div style="height: 3vh;"></div>
       <p><em>"If you are to continue my work, you must first understand it."</em></p>
-      <div style="height: 40px;"></div>
-      <p>Before you can react, the door locks behind you. To leave the room and carry on his legacy, you must solve the puzzles he left behind.</p>
+      <div style="height: 3vh;"></div>
+      <p>Before you can react, the door locks behind you. The note continues:</p>
+      <div style="height: 3vh;"></div>
+      <p><em>"To fully inherit my research and this manor, you must prove that you are worthy. Solve the puzzles in this room to obtain the key and unlock the door. The star lamps will indicate which puzzle you must solve first."</em></p>
     </div>
     <div id="intro-story-2" class="intro-story hidden">
       <p>Your mentor has left you a book of knowledge to guide you. Scan this QR code on another device to open the book. Each page contains information and clues to solve a single puzzle.</p>
