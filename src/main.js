@@ -174,8 +174,28 @@ function initSolarSystem() {
     return Math.abs(distanceFromCenter - ringRadius);
   }
   
+  // Check if a ring is occupied by another planet (not the one being dragged)
+  function isRingOccupied(ringRadius, excludingPlanet = null) {
+    const planets = document.querySelectorAll('[data-planet]');
+    for (const planet of planets) {
+      // Skip the planet being dragged
+      if (planet === excludingPlanet) continue;
+      
+      // Check if this planet is on a ring
+      const currentRing = planet.getAttribute('data-current-ring');
+      if (currentRing !== null) {
+        const currentRingRadius = parseFloat(currentRing);
+        // Check if it's on the same ring (within small tolerance)
+        if (Math.abs(currentRingRadius - ringRadius) < 0.05) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  
   // Get closest ring and snap position
-  function getClosestRing(point, snapThreshold = 0.2) {
+  function getClosestRing(point, snapThreshold = 0.2, excludingPlanet = null) {
     const rings = getAllRings();
     let closestRing = null;
     let minDistance = Infinity;
@@ -184,6 +204,11 @@ function initSolarSystem() {
     rings.forEach(ring => {
       const distance = distanceToRing(point, ring.radius);
       if (distance < minDistance && distance < snapThreshold) {
+        // Check if this ring is occupied by another planet
+        if (isRingOccupied(ring.radius, excludingPlanet)) {
+          return; // Skip this ring, it's occupied
+        }
+        
         minDistance = distance;
         closestRing = ring;
         
@@ -449,10 +474,10 @@ function initSolarSystem() {
   
   // Image data with isModelOn flag for each image
   const imageData = [
-    { x: -1.5, z: -3.9, width: 0.8, height: 0.612, element: 'air', isModelOn: false },
-    { x: -0.5, z: -3.9, width: 0.8, height: 0.612, element: 'earth', isModelOn: false },
-    { x: 0.5, z: -3.9, width: 0.8, height: 0.612, element: 'fire', isModelOn: false },
-    { x: 1.5, z: -3.9, width: 0.8, height: 0.612, element: 'water', isModelOn: false }
+    { x: -1.5, z: -3.500, width: 0.8, height: 0.612, element: 'air', isModelOn: false },
+    { x: -0.5, z: -3.500, width: 0.8, height: 0.612, element: 'earth', isModelOn: false },
+    { x: 0.5, z: -3.500, width: 0.8, height: 0.612, element: 'fire', isModelOn: false },
+    { x: 1.5, z: -3.500, width: 0.8, height: 0.612, element: 'water', isModelOn: false }
   ];
   
   // Track which image element each sphere is snapped to (sphere -> imageElement)
@@ -955,11 +980,11 @@ function initSolarSystem() {
     if (tableId === 'table-2') {
       // For table-2, position camera above the table (same Z as table top center)
       cameraZ = worldZ;
-      cameraY = 3.4; // Y position for zodiac symbols puzzle mode
+      cameraY = 3.153; // Y position for zodiac symbols puzzle mode
     } else {
       // For solar system table, use fixed Z position
       cameraZ = -18.500;
-      cameraY = 3.4; // Y position for solar system puzzle mode
+      cameraY = 3.153; // Y position for solar system puzzle mode
     }
     
     const topDownPosition = {
@@ -2226,9 +2251,9 @@ function initSolarSystem() {
           }
         });
         
-        // Reset previously hovered arrow to black
+        // Reset previously hovered arrow to white
         if (hoveredArrow && hoveredArrow !== null) {
-          hoveredArrow.setAttribute('color', '#000000');
+          hoveredArrow.setAttribute('material', 'side: double; color: #FFFFFF'); // White
           hoveredArrow = null;
         }
         
@@ -2237,13 +2262,13 @@ function initSolarSystem() {
           arrowIntersects.sort((a, b) => a.distance - b.distance);
           const hoveredArrowElement = arrowIntersects[0].element;
           
-          hoveredArrowElement.setAttribute('color', '#FFFF00'); // Yellow
+          hoveredArrowElement.setAttribute('material', 'side: double; color: #FFFF00'); // Yellow
           hoveredArrow = hoveredArrowElement;
         }
       } else {
         // Reset hovered arrow if puzzle is solved
         if (hoveredArrow && hoveredArrow !== null) {
-          hoveredArrow.setAttribute('color', '#000000');
+          hoveredArrow.setAttribute('material', 'side: double; color: #FFFFFF'); // White
           hoveredArrow = null;
         }
       }
@@ -2278,7 +2303,7 @@ function initSolarSystem() {
       
       // Check for ring proximity and snap
       const currentPos = { x: relativeX, y: relativeY, z: relativeZ };
-      const closestRing = getClosestRing(currentPos, 0.15); // Snap threshold
+      const closestRing = getClosestRing(currentPos, 0.15, draggedPlanet); // Snap threshold
       
       if (closestRing.ring && closestRing.position) {
         // Snap to ring
@@ -2323,7 +2348,7 @@ function initSolarSystem() {
       const originalPos = sphereOriginalPositions.get(draggedSphere);
       if (!originalPos) return; // Safety check
       
-      // Check if sphere is over an image - if so, snap x to image x and z to -4.1
+      // Check if sphere is over an image - if so, snap x to image x and z to -3.700
       // But only if the image doesn't already have a model on it
       const imageElement = getImageAtPosition({ x: localVector.x, y: originalPos.y, z: localVector.z });
       let finalX = localVector.x;
@@ -2334,7 +2359,7 @@ function initSolarSystem() {
         // Only snap if the image doesn't already have a model on it
         if (imgData && !imgData.isModelOn) {
           finalX = imgData.x; // Snap x to image x position
-          finalZ = -4.1; // Snap z to -4.1
+          finalZ = -3.700; // Snap z to -3.700
         }
       }
       
@@ -2374,7 +2399,7 @@ function initSolarSystem() {
       
       // Get current position
       const currentPos = planetToRelease.getAttribute('position');
-      const closestRing = getClosestRing(currentPos, 0.15);
+      const closestRing = getClosestRing(currentPos, 0.15, planetToRelease);
       
       if (closestRing.ring && closestRing.position) {
         // Snap to ring and lock position
@@ -2403,14 +2428,6 @@ function initSolarSystem() {
             planetCorrect[planetName] = false;
           }
         }
-        
-        // Update the original position to the new ring position
-        // So if moved again, this becomes the new starting position
-        planetOriginalPositions.set(planetToRelease, {
-          x: closestRing.position.x,
-          y: closestRing.position.y,
-          z: closestRing.position.z
-        });
         
         // Check planet order (this will start animation if all planets are correct)
         checkPlanetOrder();
@@ -2485,7 +2502,7 @@ function initSolarSystem() {
           const snappedPos = {
             x: imgData.x, // Snap x to image x position
             y: currentPos.y, // Keep current y
-            z: -4.1 // Snap z to -4.1
+            z: -3.700 // Snap z to -3.700
           };
           sphereToRelease.setAttribute('position', snappedPos);
           
@@ -3575,27 +3592,25 @@ function initSolarSystem() {
     
     imageContainer.appendChild(letterImage);
     
-    // Create up arrow as a visible rectangular box (top)
-    const upArrow = document.createElement('a-box');
+    // Create up arrow as triangle image (top)
+    const upArrow = document.createElement('a-image');
     upArrow.setAttribute('class', 'greek-arrow-up');
     upArrow.setAttribute('data-index', index);
     upArrow.setAttribute('position', '0 0.1 0.01');
     upArrow.setAttribute('width', '0.08');
-    upArrow.setAttribute('height', '0.03');
-    upArrow.setAttribute('depth', '0.005');
-    upArrow.setAttribute('color', '#000000');
-    upArrow.setAttribute('material', 'side: double');
+    upArrow.setAttribute('height', '0.08');
+    upArrow.setAttribute('src', 'data/triangle-up.png');
+    upArrow.setAttribute('material', 'side: double; color: #FFFFFF'); // White by default
     
-    // Create down arrow as a visible rectangular box (bottom)
-    const downArrow = document.createElement('a-box');
+    // Create down arrow as triangle image (bottom)
+    const downArrow = document.createElement('a-image');
     downArrow.setAttribute('class', 'greek-arrow-down');
     downArrow.setAttribute('data-index', index);
     downArrow.setAttribute('position', '0 -0.1 0.01');
     downArrow.setAttribute('width', '0.08');
-    downArrow.setAttribute('height', '0.03');
-    downArrow.setAttribute('depth', '0.005');
-    downArrow.setAttribute('color', '#000000');
-    downArrow.setAttribute('material', 'side: double');
+    downArrow.setAttribute('height', '0.08');
+    downArrow.setAttribute('src', 'data/triangle-down.png');
+    downArrow.setAttribute('material', 'side: double; color: #FFFFFF'); // White by default
     
     // Event handlers are handled by the raycaster system in handleMouseDown
     
@@ -3639,10 +3654,10 @@ function initSolarSystem() {
     
     // Sphere positions and elements
     const sphereData = [
-      { element: 'air', position: '1 0.32 -3.200', sphereId: 'sphere-1' },
-      { element: 'fire', position: '0.33 0.32 -3.200', sphereId: 'sphere-2' },
-      { element: 'water', position: '-0.33 0.32 -3.200', sphereId: 'sphere-3' },
-      { element: 'earth', position: '-1 0.32 -3.200', sphereId: 'sphere-4' }
+      { element: 'air', position: '1 0.32 -4.5', sphereId: 'sphere-1' },
+      { element: 'fire', position: '0.33 0.32 -4.5', sphereId: 'sphere-2' },
+      { element: 'water', position: '-0.33 0.32 -4.5', sphereId: 'sphere-3' },
+      { element: 'earth', position: '-1 0.32 -4.5', sphereId: 'sphere-4' }
     ];
     
     // Remove existing spheres

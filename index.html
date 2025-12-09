@@ -43,9 +43,19 @@
     <a-plane position="6.54 2.5 -13.455" rotation="0 -90 0" width="13.08" height="5" material="src: data/textures/carpet/Carpet_Color (Dark).jpg; normalMap: data/textures/carpet/Carpet012_2K-JPG_NormalGL.jpg; aoMap: data/textures/carpet/Carpet012_2K-JPG_AmbientOcclusion.jpg; roughnessMap: data/textures/carpet/Carpet012_2K-JPG_Roughness.jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5; side: double"></a-plane>
     
     <!-- Constellation Blackboard on Right Wall (stars will be created dynamically) -->
-    <a-entity id="centaurus-board" position="6.53 2.887 -13.455" rotation="0 -90 0" scale="0.776 0.776 0.776">
+    <a-entity id="centaurus-board" position="6.53 2.882 -13.455" rotation="0 -90 0" scale="0.776 0.776 0.776">
       <!-- Blackboard -->
       <a-image id="constellation-drawing-background" position="0 0.018 0" width="4.5" height="3.5" scale="1.797 1.797 1.797" src="data/star_constellations/Southern Star Background.jpg" material="roughness: 0.8; side: double"></a-image>
+      
+      <!-- Frame around Constellation Drawing Background -->
+      <!-- Top frame (horizontal) -->
+      <a-box position="0 2.522 0" rotation="0 0 0" width="8.237" height="0.15" depth="0.1" scale="0.982 1 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
+      <!-- Bottom frame (horizontal) -->
+      <a-box position="0 -2.487 0" rotation="0 0 0" width="8.237" height="0.15" depth="0.1" scale="0.982 1 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
+      <!-- Left frame (vertical) -->
+      <a-box position="-4.118 0.018 0" rotation="0 0 0" width="0.15" height="6.440" depth="0.1" scale="1 0.8012 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
+      <!-- Right frame (vertical) -->
+      <a-box position="4.118 0.018 0" rotation="0 0 0" width="0.15" height="6.440" depth="0.1" scale="1 0.8012 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; color: #666666; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       
       <!-- Stars will be created dynamically by JavaScript -->
       
@@ -114,36 +124,36 @@
       <!-- Solar System on Table (centered, smaller rings) -->
       <a-entity position="0 0.5 -3.5" id="solar-system">
         <!-- Sun (centered on table) -->
-        <a-sphere position="0 0 0" radius="0.12" src="data/planet_textures/Sun.jpg" material="emissive: #FFD700; emissiveIntensity: 0.8">
+        <a-sphere position="0 0 0" radius="0.132" src="data/planet_textures/Sun.jpg" material="emissive: #FFD700; emissiveIntensity: 0.8">
           <a-animation attribute="rotation" to="0 360 0" dur="10000" repeat="indefinite"></a-animation>
         </a-sphere>
         
         <!-- Mercury (Left Side) -->
-        <a-sphere data-planet="mercury" data-radius="0.25" data-ring-index="0" class="draggable" position="-1.5 0 -0.75" radius="0.025" src="data/planet_textures/Mercury.jpg">
+        <a-sphere data-planet="mercury" data-radius="0.25" data-ring-index="0" class="draggable" position="-1.5 0 -0.75" radius="0.015" src="data/planet_textures/Mercury.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="10000" repeat="indefinite"></a-animation>
         </a-sphere>
         <a-ring data-ring="0" data-ring-radius="0.25" position="0 0 0" rotation="-90 0 0" radius-inner="0.25" radius-outer="0.26" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
         <!-- Venus (Left Side) -->
-        <a-sphere data-planet="venus" data-radius="0.35" data-ring-index="1" class="draggable" position="-1.5 0 -0.25" radius="0.03" src="data/planet_textures/Venus.jpg">
+        <a-sphere data-planet="venus" data-radius="0.35" data-ring-index="1" class="draggable" position="-1.5 0 -0.25" radius="0.031" src="data/planet_textures/Venus.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="8000" repeat="indefinite"></a-animation>
         </a-sphere>
         <a-ring data-ring="1" data-ring-radius="0.35" position="0 0 0" rotation="-90 0 0" radius-inner="0.35" radius-outer="0.36" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
         <!-- Earth (Left Side) -->
-        <a-sphere data-planet="earth" data-radius="0.45" data-ring-index="2" class="draggable" position="-1.5 0 0.25" radius="0.035" src="data/planet_textures/Earth.jpg">
+        <a-sphere data-planet="earth" data-radius="0.45" data-ring-index="2" class="draggable" position="-1.5 0 0.25" radius="0.033" src="data/planet_textures/Earth.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="5000" repeat="indefinite"></a-animation>
         </a-sphere>
         <a-ring data-ring="2" data-ring-radius="0.45" position="0 0 0" rotation="-90 0 0" radius-inner="0.45" radius-outer="0.46" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
         <!-- Mars (Left Side) -->
-        <a-sphere data-planet="mars" data-radius="0.55" data-ring-index="3" class="draggable" position="-1.5 0 0.75" radius="0.03" src="data/planet_textures/Mars.jpg">
+        <a-sphere data-planet="mars" data-radius="0.55" data-ring-index="3" class="draggable" position="-1.5 0 0.75" radius="0.021" src="data/planet_textures/Mars.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="6000" repeat="indefinite"></a-animation>
         </a-sphere>
         <a-ring data-ring="3" data-ring-radius="0.55" position="0 0 0" rotation="-90 0 0" radius-inner="0.55" radius-outer="0.56" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
         <!-- Jupiter (Right Side) -->
-        <a-sphere data-planet="jupiter" data-radius="0.7" data-ring-index="4" class="draggable" position="1.5 0 -0.75" radius="0.06" src="data/planet_textures/Jupiter.jpg">
+        <a-sphere data-planet="jupiter" data-radius="0.7" data-ring-index="4" class="draggable" position="1.5 0 -0.75" radius="0.0814" src="data/planet_textures/Jupiter.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="3000" repeat="indefinite"></a-animation>
         </a-sphere>
         <a-ring data-ring="4" data-ring-radius="0.7" position="0 0 0" rotation="-90 0 0" radius-inner="0.7" radius-outer="0.71" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
@@ -183,13 +193,13 @@
         <a-ring data-ring="5" data-ring-radius="0.85" position="0 0 0" rotation="-90 0 0" radius-inner="0.85" radius-outer="0.86" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
         <!-- Uranus (Right Side) -->
-        <a-sphere data-planet="uranus" data-radius="1" data-ring-index="6" class="draggable" position="1.5 0 0.25" radius="0.04" src="data/planet_textures/Uranus.jpg">
+        <a-sphere data-planet="uranus" data-radius="1" data-ring-index="6" class="draggable" position="1.5 0 0.25" radius="0.052" src="data/planet_textures/Uranus.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="5000" repeat="indefinite"></a-animation>
         </a-sphere>
         <a-ring data-ring="6" data-ring-radius="1" position="0 0 0" rotation="-90 0 0" radius-inner="1" radius-outer="1.01" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
         
         <!-- Neptune (Right Side) -->
-        <a-sphere data-planet="neptune" data-radius="1.15" data-ring-index="7" class="draggable" position="1.5 0 0.75" radius="0.035" src="data/planet_textures/Neptune.jpg">
+        <a-sphere data-planet="neptune" data-radius="1.15" data-ring-index="7" class="draggable" position="1.5 0 0.75" radius="0.051" src="data/planet_textures/Neptune.jpg">
           <a-animation attribute="rotation" to="0 360 0" dur="5500" repeat="indefinite"></a-animation>
         </a-sphere>
         <a-ring data-ring="7" data-ring-radius="1.15" position="0 0 0" rotation="-90 0 0" radius-inner="1.15" radius-outer="1.16" segments-theta="100" color="#ffffff" opacity="0.8"></a-ring>
@@ -211,10 +221,10 @@
       <a-box position="2.06 -0.718 -2.1" width="0.2" height="1" depth="0.2" scale="1 1.839 1" material="src: data/textures/wood_table/wood_table_worn_diff_2k.jpg; normalMap: data/textures/wood_table/wood_table_worn_nor_gl_2k.jpg; roughnessMap: data/textures/wood_table/wood_table_worn_rough_2k.jpg; aoMap: data/textures/wood_table/wood_table_worn_ao_2k.jpg; roughness: 0.8; metalness: 0.1; aoMapIntensity: 1.0; normalScale: 1 1"></a-box>
       
       <!-- Four Elements Images - horizontally in the middle towards the back -->
-      <a-plane position="-1.5 0.31 -3.9" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Air.png" material="side: double; transparent: true"></a-plane>
-      <a-plane position="-0.5 0.31 -3.9" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Earth.png" material="side: double; transparent: true"></a-plane>
-      <a-plane position="0.5 0.31 -3.9" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Fire.png" material="side: double; transparent: true"></a-plane>
-      <a-plane position="1.5 0.31 -3.9" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Water.png" material="side: double; transparent: true"></a-plane>
+      <a-plane position="-1.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Air.png" material="side: double; transparent: true"></a-plane>
+      <a-plane position="-0.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Earth.png" material="side: double; transparent: true"></a-plane>
+      <a-plane position="0.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Fire.png" material="side: double; transparent: true"></a-plane>
+      <a-plane position="1.5 0.31 -3.500" width="0.4" height="0.306" rotation="-90 180 0" scale="2 2 2" src="data/zodiac/four elements/Water.png" material="side: double; transparent: true"></a-plane>
       
       <!-- Four Spheres in front of the images -->
       <!-- Blue sphere for Air -->
