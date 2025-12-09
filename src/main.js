@@ -518,6 +518,9 @@ function initSolarSystem() {
     let minDistance = Infinity;
     let snapPosition = null;
     
+    // Calculate distance from center
+    const distanceFromCenter = Math.sqrt(point.x * point.x + point.z * point.z);
+    
     rings.forEach(ring => {
       const distance = distanceToRing(point, ring.radius);
       if (distance < minDistance && distance < snapThreshold) {
@@ -530,12 +533,24 @@ function initSolarSystem() {
         closestRing = ring;
         
         // Calculate angle on the ring
-        const angle = Math.atan2(point.z, point.x);
+        // If point is at center (0,0), use angle 0 to place planet at (ringRadius, 0, 0)
+        let angle = 0;
+        if (distanceFromCenter > 0.01) {
+          angle = Math.atan2(point.z, point.x);
+        }
+        
         snapPosition = {
           x: Math.cos(angle) * ring.radius,
           y: point.y, // Keep the y position (table height)
           z: Math.sin(angle) * ring.radius
         };
+        
+        // Ensure snap position is not at the center (sun position)
+        const snapDistanceFromCenter = Math.sqrt(snapPosition.x * snapPosition.x + snapPosition.z * snapPosition.z);
+        if (snapDistanceFromCenter < 0.2) {
+          // If somehow the snap position is too close to center, don't snap
+          return;
+        }
       }
     });
     
