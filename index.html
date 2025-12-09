@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/src/style.css">
 </head>
 <body>
-  <a-scene renderer="antialias: true; colorManagement: true; sortObjects: true">
+  <a-scene renderer="antialias: true; colorManagement: true; sortObjects: true" fix-zoom>
     <!-- Room Environment -->
     <!-- Floor -->
     <a-plane position="0 0 -13.455" rotation="-90 0 0" width="20" height="20" material="src: data/textures/carpet/Southern Hemisphere Star Constellation Map Carpet (Tiled).jpg; normalMap: data/textures/carpet/Carpet_Normal (Tiled).jpg; roughnessMap: data/textures/carpet/Carpet_Roughness (Tiled).jpg; aoMap: data/textures/carpet/Carpet_AO (Tiled).jpg; roughness: 1.0; metalness: 0; aoMapIntensity: 1.0; normalScale: 0.5 0.5" scale="0.654 0.654 0.654"></a-plane>
@@ -310,31 +310,91 @@
       }, false);
     });
     
+    // Fix zoom issue - register component to fix renderer early
+    AFRAME.registerComponent('fix-zoom', {
+      init: function() {
+        const scene = this.el;
+        const fixRendererZoom = () => {
+          if (scene.renderer) {
+            const renderer = scene.renderer;
+            const canvas = renderer.domElement;
+            
+            // Force pixel ratio to 1 to prevent zoom issues
+            renderer.setPixelRatio(1);
+            
+            // Get actual viewport dimensions
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // Set renderer size
+            renderer.setSize(width, height, false);
+            
+            // Force canvas CSS to match viewport exactly
+            if (canvas) {
+              canvas.style.width = width + 'px';
+              canvas.style.height = height + 'px';
+              canvas.style.maxWidth = '100%';
+              canvas.style.maxHeight = '100%';
+              canvas.style.transform = 'scale(1)';
+              canvas.style.transformOrigin = 'top left';
+            }
+          }
+        };
+        
+        // Fix immediately
+        fixRendererZoom();
+        
+        // Fix on renderstart
+        scene.addEventListener('renderstart', fixRendererZoom);
+        
+        // Fix on loaded
+        scene.addEventListener('loaded', fixRendererZoom);
+        
+        // Store function globally for resize handler
+        window.fixRendererZoom = fixRendererZoom;
+      }
+    });
+    
     // Fix zoom issue and improve texture quality
     const scene = document.querySelector('a-scene');
-    scene.addEventListener('renderstart', function() {
-      const THREE = AFRAME.THREE;
-      const renderer = scene.renderer;
-      
-      // Fix device pixel ratio to prevent zoom issues
-      if (renderer) {
-        // Cap pixel ratio to prevent zoom issues on high DPI displays
-        // Use 1.5 as a safe maximum to prevent zoom while maintaining quality
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-        renderer.setPixelRatio(pixelRatio);
-        
-        // Ensure canvas size matches display size exactly
+    
+    // Fix renderer function (also available globally)
+    function fixRendererZoom() {
+      if (scene && scene.renderer) {
+        const renderer = scene.renderer;
         const canvas = renderer.domElement;
+        
+        // Force pixel ratio to 1 to prevent zoom issues
+        renderer.setPixelRatio(1);
+        
+        // Get actual viewport dimensions
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // Set renderer size
+        renderer.setSize(width, height, false);
+        
+        // Force canvas CSS to match viewport exactly
         if (canvas) {
-          const width = window.innerWidth;
-          const height = window.innerHeight;
-          renderer.setSize(width, height, false);
-          
-          // Ensure canvas CSS size matches its internal size
           canvas.style.width = width + 'px';
           canvas.style.height = height + 'px';
+          canvas.style.maxWidth = '100%';
+          canvas.style.maxHeight = '100%';
+          canvas.style.transform = 'scale(1)';
+          canvas.style.transformOrigin = 'top left';
         }
       }
+    }
+    
+    // Store globally for resize handler
+    window.fixRendererZoom = fixRendererZoom;
+    
+    // Also fix on renderstart (when renderer is definitely ready)
+    scene.addEventListener('renderstart', function() {
+      fixRendererZoom();
+      
+      const THREE = AFRAME.THREE;
+      const renderer = scene.renderer;
       
       // Update all existing materials and textures
       function improveTextureQuality() {
@@ -366,23 +426,16 @@
     
     // Handle window resize to maintain correct aspect ratio
     window.addEventListener('resize', function() {
-      const scene = document.querySelector('a-scene');
-      if (scene && scene.renderer) {
-        const renderer = scene.renderer;
-        const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
-        renderer.setPixelRatio(pixelRatio);
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-        renderer.setSize(width, height, false);
-        
-        // Ensure canvas CSS size matches its internal size
-        const canvas = renderer.domElement;
-        if (canvas) {
-          canvas.style.width = width + 'px';
-          canvas.style.height = height + 'px';
-        }
+      if (window.fixRendererZoom) {
+        window.fixRendererZoom();
       }
     });
+    
+    // Also fix after delays to catch any late initialization
+    setTimeout(fixRendererZoom, 100);
+    setTimeout(fixRendererZoom, 500);
+    setTimeout(fixRendererZoom, 1000);
+    setTimeout(fixRendererZoom, 2000);
   </script>
 </body>
 </html>
