@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Celestial Secrets - A-Frame VR</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -310,11 +310,31 @@
       }, false);
     });
     
-    // Improve texture quality for all materials
+    // Fix zoom issue and improve texture quality
     const scene = document.querySelector('a-scene');
     scene.addEventListener('renderstart', function() {
       const THREE = AFRAME.THREE;
       const renderer = scene.renderer;
+      
+      // Fix device pixel ratio to prevent zoom issues
+      if (renderer) {
+        // Cap pixel ratio to prevent zoom issues on high DPI displays
+        // Use 1.5 as a safe maximum to prevent zoom while maintaining quality
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+        renderer.setPixelRatio(pixelRatio);
+        
+        // Ensure canvas size matches display size exactly
+        const canvas = renderer.domElement;
+        if (canvas) {
+          const width = window.innerWidth;
+          const height = window.innerHeight;
+          renderer.setSize(width, height, false);
+          
+          // Ensure canvas CSS size matches its internal size
+          canvas.style.width = width + 'px';
+          canvas.style.height = height + 'px';
+        }
+      }
       
       // Update all existing materials and textures
       function improveTextureQuality() {
@@ -342,6 +362,26 @@
       // Also improve textures after a short delay to catch any late-loading textures
       setTimeout(improveTextureQuality, 1000);
       setTimeout(improveTextureQuality, 3000);
+    });
+    
+    // Handle window resize to maintain correct aspect ratio
+    window.addEventListener('resize', function() {
+      const scene = document.querySelector('a-scene');
+      if (scene && scene.renderer) {
+        const renderer = scene.renderer;
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 1.5);
+        renderer.setPixelRatio(pixelRatio);
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        renderer.setSize(width, height, false);
+        
+        // Ensure canvas CSS size matches its internal size
+        const canvas = renderer.domElement;
+        if (canvas) {
+          canvas.style.width = width + 'px';
+          canvas.style.height = height + 'px';
+        }
+      }
     });
   </script>
 </body>

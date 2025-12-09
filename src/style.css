@@ -50,6 +50,14 @@ a-scene {
   z-index: 1;
 }
 
+/* Fix canvas scaling issues */
+a-scene canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  image-rendering: auto;
+}
+
 /* Cursor styling */
 a-cursor {
   cursor: pointer;
