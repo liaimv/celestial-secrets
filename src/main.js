@@ -1,6 +1,169 @@
 // A-Frame initialization
 console.log('A-Frame VR Scene Initialized');
 
+// Intro overlay sequence
+function initIntroSequence() {
+  const introOverlay = document.getElementById('intro-overlay');
+  const introTitle = document.getElementById('intro-title');
+  const introStory = document.getElementById('intro-story');
+  const introStory2 = document.getElementById('intro-story-2');
+  const startButton = document.getElementById('start-button');
+  
+  if (!introOverlay || !introTitle || !introStory || !introStory2 || !startButton) {
+    console.error('Intro overlay elements not found');
+    return;
+  }
+  
+  let isFirstStory = true;
+  
+  // After 2 seconds, fade out title and fade in first story
+  setTimeout(() => {
+    introTitle.classList.add('fade-out');
+    
+    // Show first story and fade it in after title starts fading
+    setTimeout(() => {
+      introStory.classList.remove('hidden');
+      startButton.classList.remove('hidden');
+      setTimeout(() => {
+        introStory.classList.add('fade-in');
+        startButton.classList.add('fade-in');
+      }, 100);
+    }, 500);
+  }, 2000);
+  
+  // Handle button click
+  startButton.addEventListener('click', () => {
+    if (isFirstStory) {
+      // Fade out first story and button together
+      introStory.classList.remove('fade-in');
+      introStory.classList.add('fade-out');
+      startButton.classList.remove('fade-in');
+      startButton.classList.add('fade-out');
+      
+      // After fade out completes, change button text and fade in second story
+      setTimeout(() => {
+        introStory.classList.add('hidden');
+        startButton.textContent = 'START';
+        startButton.classList.remove('fade-out');
+        introStory2.classList.remove('hidden');
+        setTimeout(() => {
+          introStory2.classList.add('fade-in');
+          startButton.classList.add('fade-in');
+        }, 100);
+      }, 1000);
+      
+      isFirstStory = false;
+    } else {
+      // First fade out the text and button
+      introStory2.classList.remove('fade-in');
+      introStory2.classList.add('fade-out');
+      startButton.classList.remove('fade-in');
+      startButton.classList.add('fade-out');
+      
+      // After text fades out, fade out the black overlay
+      setTimeout(() => {
+        introOverlay.classList.add('fade-out');
+        // Remove overlay from DOM after fade completes
+        setTimeout(() => {
+          introOverlay.style.display = 'none';
+        }, 1000);
+      }, 1000);
+    }
+  });
+  
+  // Handle controls overlay close button
+  const controlsOverlay = document.getElementById('controls-overlay');
+  const closeControlsButton = document.getElementById('close-controls');
+  
+  if (controlsOverlay && closeControlsButton) {
+    closeControlsButton.addEventListener('click', () => {
+      controlsOverlay.classList.add('hidden');
+    });
+  }
+  
+  // Function to enable/disable camera controls based on controls overlay visibility
+  function updateCameraControls() {
+    const scene = document.querySelector('a-scene');
+    if (!scene) return;
+    
+    const cameraEl = scene.querySelector('a-camera');
+    if (!cameraEl) return;
+    
+    const controlsOverlay = document.getElementById('controls-overlay');
+    if (!controlsOverlay) return;
+    
+    // Check if controls overlay is visible (doesn't have 'hidden' class)
+    const isControlsVisible = !controlsOverlay.classList.contains('hidden');
+    
+    if (isControlsVisible) {
+      // Freeze camera - disable controls
+      if (cameraEl.components && cameraEl.components['look-controls']) {
+        cameraEl.components['look-controls'].enabled = false;
+      }
+      if (cameraEl.components && cameraEl.components['wasd-controls']) {
+        cameraEl.components['wasd-controls'].enabled = false;
+      }
+      cameraEl.setAttribute('look-controls', 'enabled', false);
+      cameraEl.setAttribute('wasd-controls', 'enabled', false);
+      console.log('Camera controls frozen - controls overlay visible');
+    } else {
+      // Unfreeze camera - enable controls (only if not in special views)
+      // Check if we're in a special view that should keep controls disabled
+      const isTopDownView = window.isTopDownView || false;
+      const isBlackboardView = window.isBlackboardView || false;
+      const isStarBackgroundView = window.isStarBackgroundView || false;
+      
+      // Only enable controls if not in a special view
+      if (!isTopDownView && !isBlackboardView && !isStarBackgroundView) {
+        if (cameraEl.components && cameraEl.components['look-controls']) {
+          cameraEl.components['look-controls'].enabled = true;
+        }
+        if (cameraEl.components && cameraEl.components['wasd-controls']) {
+          cameraEl.components['wasd-controls'].enabled = true;
+        }
+        cameraEl.setAttribute('look-controls', 'enabled', true);
+        cameraEl.setAttribute('wasd-controls', 'enabled', true);
+        console.log('Camera controls enabled - controls overlay hidden');
+      }
+    }
+  }
+  
+  // Set up MutationObserver to watch for changes to controls overlay visibility
+  if (controlsOverlay) {
+    // Initial check - wait for A-Frame to be ready
+    function doInitialCheck() {
+      const scene = document.querySelector('a-scene');
+      if (scene && scene.querySelector('a-camera')) {
+        updateCameraControls();
+      } else {
+        setTimeout(doInitialCheck, 100);
+      }
+    }
+    doInitialCheck();
+    
+    // Watch for class changes on controls overlay
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          updateCameraControls();
+        }
+      });
+    });
+    
+    observer.observe(controlsOverlay, {
+      attributes: true,
+      attributeFilter: ['class']
+    });
+  }
+}
+
+// Initialize intro sequence when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initIntroSequence);
+} else {
+  initIntroSequence();
+}
+
 // Wait for A-Frame to be ready
 if (typeof AFRAME !== 'undefined') {
   initSolarSystem();
@@ -450,6 +613,12 @@ function initSolarSystem() {
   let completionMessageUI = null;
   let completionText = null;
   let completionMessageTimeout = null;
+  
+  // Guide button UI state
+  let guideButton = null;
+  let guideOverlay = null;
+  let guideText = null;
+  let isGuideOverlayVisible = false;
   
   // Camera view state
   let isTopDownView = false;
@@ -1056,6 +1225,10 @@ function initSolarSystem() {
     isTopDownView = true;
     topDownViewTableId = tableId; // Store which table we're viewing
     window.isTopDownView = true;
+    
+    // Show Guide button when entering puzzle mode
+    showGuideButton();
+    
     console.log('Switched to top-down view for table:', tableId);
   }
   
@@ -1142,6 +1315,10 @@ function initSolarSystem() {
     window.isTopDownView = false; // Not top-down, but locked view
     window.isBlackboardView = false; // Not blackboard view
     window.isStarBackgroundView = true; // Set global flag for lock-rotation component
+    
+    // Show Guide button when entering puzzle mode
+    showGuideButton();
+    
     console.log('Switched to star background view');
   }
   
@@ -1226,6 +1403,10 @@ function initSolarSystem() {
     isBlackboardView = true;
     window.isTopDownView = false; // Not top-down, but locked view
     window.isBlackboardView = true; // Set global flag for lock-rotation component
+    
+    // Show Guide button when entering puzzle mode
+    showGuideButton();
+    
     console.log('Switched to blackboard view');
   }
   
@@ -1408,6 +1589,9 @@ function initSolarSystem() {
     topDownViewTableId = null; // Clear table tracking
     window.isTopDownView = false;
     window.topDownYRotation = 0; // Clear stored Y rotation
+    
+    // Hide Guide button when exiting puzzle mode
+    hideGuideButton();
     
     // Show proximity UI again if near a table, blackboard, or star background (only if it's the next available puzzle)
     const nextAvailablePuzzle = getNextAvailablePuzzle();
@@ -1615,6 +1799,100 @@ function initSolarSystem() {
     setTimeout(() => {
       initCompletionMessageUI();
     }, 200);
+  }
+  
+  // Initialize Guide Button UI
+  function initGuideButtonUI() {
+    guideButton = document.getElementById('guide-button');
+    guideOverlay = document.getElementById('guide-overlay');
+    guideText = document.getElementById('guide-text');
+    
+    if (!guideButton || !guideOverlay || !guideText) {
+      console.warn('Guide button UI elements not found - will retry');
+      // Retry after a short delay in case DOM isn't ready
+      setTimeout(() => {
+        initGuideButtonUI();
+      }, 200);
+      return;
+    }
+    
+    // Add click event listener to Guide button
+    guideButton.addEventListener('click', handleGuideButtonClick);
+    
+    // Initially hide Guide button and overlay
+    guideButton.classList.add('hidden');
+    guideOverlay.classList.add('hidden');
+    
+    console.log('Guide button UI initialized');
+  }
+  
+  // Get guide text based on current puzzle type
+  function getGuideTextForPuzzle() {
+    if (isTopDownView) {
+      // Determine which table we're viewing
+      if (topDownViewTableId === 'table-2') {
+        return 'Drag each zodiac sign object to its matching element.';
+      } else {
+        return 'Drag the planets into the correct order from the Sun.';
+      }
+    } else if (isBlackboardView) {
+      return 'Draw the correct southern hemisphere star constellation. Click two stars to connect them. Click a line to remove it.';
+    } else if (isStarBackgroundView) {
+      return 'Look at the blue star in the northern hemisphere star constellation and choose its correct Greek letter. Use the arrows to scroll through the alphabet.';
+    }
+    return '';
+  }
+  
+  // Handle Guide button click
+  function handleGuideButtonClick() {
+    if (!guideButton || !guideOverlay || !guideText) return;
+    
+    if (isGuideOverlayVisible) {
+      // Hide overlay with fade-out animation
+      // Remove hidden class first to ensure overlay is visible
+      guideOverlay.classList.remove('hidden');
+      
+      // Force reflow
+      guideOverlay.offsetHeight;
+      
+      // Start fade-out by adding hidden class (CSS transition will handle the fade)
+      guideOverlay.classList.add('hidden');
+      
+      guideButton.textContent = 'Guide';
+      isGuideOverlayVisible = false;
+    } else {
+      // Show overlay with fade-in animation
+      const puzzleGuideText = getGuideTextForPuzzle();
+      guideText.textContent = puzzleGuideText;
+      
+      // Remove hidden class (CSS transition will handle the fade-in)
+      guideOverlay.classList.remove('hidden');
+      
+      guideButton.textContent = 'EXIT';
+      isGuideOverlayVisible = true;
+    }
+  }
+  
+  // Show Guide button (when entering puzzle mode)
+  function showGuideButton() {
+    if (guideButton) {
+      guideButton.classList.remove('hidden');
+    }
+  }
+  
+  // Hide Guide button (when exiting puzzle mode)
+  function hideGuideButton() {
+    if (guideButton) {
+      guideButton.classList.add('hidden');
+    }
+    // Also hide overlay if it's visible
+    if (guideOverlay && isGuideOverlayVisible) {
+      guideOverlay.classList.add('hidden');
+      if (guideButton) {
+        guideButton.textContent = 'Guide';
+      }
+      isGuideOverlayVisible = false;
+    }
   }
   
   // Show completion message (now removed - puzzles auto-exit instead)
@@ -1964,6 +2242,11 @@ function initSolarSystem() {
   
   // Handle mouse down - start dragging or handle Greek input controls
   function handleMouseDown(event) {
+    // Prevent all interactions when guide overlay is visible
+    if (isGuideOverlayVisible) {
+      return;
+    }
+    
     // Check for Greek input controls first (only in star background view and if puzzle not solved)
     if ((isStarBackgroundView || window.isStarBackgroundView) && !puzzleState['star-background']) {
       // Only handle left mouse button
@@ -2209,6 +2492,11 @@ function initSolarSystem() {
   
   // Handle mouse move - update planet or sphere position or handle arrow hover
   function handleMouseMove(event) {
+    // Prevent all interactions when guide overlay is visible
+    if (isGuideOverlayVisible) {
+      return;
+    }
+    
     // Handle arrow hover in star background view (even when not dragging)
     if (isStarBackgroundView || window.isStarBackgroundView) {
       const THREE = window.THREE || (window.AFRAME && window.AFRAME.THREE);
@@ -2932,6 +3220,11 @@ function initSolarSystem() {
   
   // Handle constellation star click
   function handleConstellationStarClick(event) {
+    // Prevent all interactions when guide overlay is visible
+    if (isGuideOverlayVisible) {
+      return;
+    }
+    
     // Only handle clicks when in camera lock mode (blackboard view) and puzzle not solved
     if ((!isBlackboardView && !window.isBlackboardView) || puzzleState['blackboard']) return;
     
@@ -3789,6 +4082,7 @@ function initSolarSystem() {
       attachEventListeners();
       initProximityUI();
       initCompletionMessageUI();
+      initGuideButtonUI();
       replaceSpheresWithZodiacSymbols();
       initDragAndDrop();
       initConstellationGame();
@@ -3814,6 +4108,7 @@ function initSolarSystem() {
       attachEventListeners();
       initProximityUI();
       initCompletionMessageUI();
+      initGuideButtonUI();
       replaceSpheresWithZodiacSymbols();
       initDragAndDrop();
       initConstellationGame();

@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Celestial Secrets - A-Frame VR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fondamento:ital@0;1&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kalnia+Glaze&display=swap" rel="stylesheet">
   <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras@v6.1.1/dist/aframe-extras.min.js"></script>
   <link rel="stylesheet" href="/src/style.css">
@@ -249,8 +253,82 @@
     </div>
   </div>
   
+  <!-- Guide Button (shown in puzzle mode) -->
+  <button id="guide-button" class="guide-button hidden">Guide</button>
+  
+  <!-- Guide Overlay -->
+  <div id="guide-overlay" class="guide-overlay hidden">
+    <div class="guide-text-container">
+      <p id="guide-text" class="guide-text"></p>
+    </div>
+  </div>
+  
+  <!-- Intro Overlay -->
+  <div id="intro-overlay" class="intro-overlay">
+    <div id="intro-title" class="intro-title">CELESTIAL SECRETS</div>
+    <div id="intro-story" class="intro-story hidden">
+      <p>After decades of studying under a renowned astronomer, you inherit his old manor following his passing. When you step into his private study, you discover a note that reads:</p>
+      <div style="height: 40px;"></div>
+      <p><em>"If you are to continue my work, you must first understand it."</em></p>
+      <div style="height: 40px;"></div>
+      <p>Before you can react, the door locks behind you. To leave the room and carry on his legacy, you must solve the puzzles he left behind.</p>
+    </div>
+    <div id="intro-story-2" class="intro-story hidden">
+      <p>Your mentor has left you a book of knowledge to guide you. Scan this QR code on another device to open the book. Each page contains information and clues to solve a single puzzle.</p>
+      <img id="qr-code" class="qr-code" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://liaimv.github.io/celestial-secrets-hint/" alt="QR Code">
+    </div>
+    <button id="start-button" class="start-button hidden">NEXT</button>
+  </div>
+  
+  <!-- Controls Overlay -->
+  <div id="controls-overlay" class="controls-overlay">
+    <div class="controls-container">
+      <button id="close-controls" class="close-controls-button">X</button>
+      <h2 class="controls-title">CONTROLS</h2>
+      <ul class="controls-list">
+        <li>WASD to move</li>
+        <li>Hold left-click and move the mouse to look</li>
+      </ul>
+    </div>
+  </div>
+  
   <script type="module" src="/src/main.js"></script>
   <script>
+    // Prevent text dragging
+    document.addEventListener('DOMContentLoaded', function() {
+      // Prevent dragstart on all elements
+      document.addEventListener('dragstart', function(e) {
+        if (e.target.tagName === 'A-TEXT' || 
+            e.target.classList.contains('proximity-text') ||
+            e.target.classList.contains('guide-text') ||
+            e.target.classList.contains('intro-title') ||
+            e.target.classList.contains('intro-story') ||
+            e.target.classList.contains('controls-title') ||
+            e.target.classList.contains('key-letter') ||
+            e.target.classList.contains('esc-text') ||
+            e.target.tagName === 'P' ||
+            e.target.tagName === 'SPAN' ||
+            e.target.tagName === 'DIV' ||
+            e.target.tagName === 'BUTTON' ||
+            e.target.tagName === 'LI' ||
+            e.target.tagName === 'H1' ||
+            e.target.tagName === 'H2' ||
+            e.target.tagName === 'H3' ||
+            e.target.tagName === 'H4' ||
+            e.target.tagName === 'H5' ||
+            e.target.tagName === 'H6') {
+          e.preventDefault();
+          return false;
+        }
+      }, false);
+      
+      // Prevent text selection on all elements
+      document.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+        return false;
+      }, false);
+    });
+    
     // Improve texture quality for all materials
     const scene = document.querySelector('a-scene');
     scene.addEventListener('renderstart', function() {
