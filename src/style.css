@@ -123,8 +123,8 @@ a-text {
   bottom: 20vh;
   right: 20vw;
   background-color: #ffffff;
-  padding: 20px 30px;
-  border-radius: 8px;
+  padding: 15px 22.5px;
+  border-radius: 6px;
   border: none;
   z-index: 2147483647 !important;
   transition: opacity 0.3s ease;
@@ -147,7 +147,7 @@ a-text {
 
 .proximity-text {
   color: #000000;
-  font-size: 36px;
+  font-size: 27px;
   font-family: 'Fondamento', serif;
   white-space: nowrap;
   user-select: none;
@@ -167,8 +167,8 @@ a-text {
   top: 20px;
   left: 20px;
   background-color: rgba(0, 0, 0, 0.5);
-  padding: 15px 20px;
-  border-radius: 8px;
+  padding: 11.25px 15px;
+  border-radius: 6px;
   z-index: 2147483647 !important;
   transition: opacity 0.3s ease;
   pointer-events: auto;
@@ -185,7 +185,7 @@ a-text {
 
 .esc-text {
   color: #ffffff;
-  font-size: 18px;
+  font-size: 13.5px;
   font-family: 'Fondamento', serif;
   white-space: nowrap;
   user-select: none;
@@ -220,11 +220,11 @@ a-text {
 /* End Game Text Styles */
 .end-game-text {
   color: #ffffff;
-  font-size: 35px;
+  font-size: 26.25px;
   font-family: 'Fondamento', serif;
   text-align: center;
   max-width: 80vw;
-  padding: 40px;
+  padding: 30px;
   opacity: 0;
   transition: opacity 1s ease-in-out;
   position: absolute;
@@ -256,7 +256,7 @@ a-text {
 }
 
 .end-game-text p {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -269,7 +269,7 @@ a-text {
 }
 
 .end-game-text p:last-of-type {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .end-game-button {
@@ -279,9 +279,9 @@ a-text {
   background-color: #ffffff;
   color: #000000;
   border: none;
-  padding: 15px 40px;
-  border-radius: 8px;
-  font-size: 24px;
+  padding: 11.25px 30px;
+  border-radius: 6px;
+  font-size: 18px;
   font-family: 'Fondamento', serif;
   font-weight: bold;
   cursor: pointer;
@@ -317,11 +317,11 @@ a-text {
 
 .end-game-final-text {
   color: #ffffff;
-  font-size: 35px;
+  font-size: 26.25px;
   font-family: 'Fondamento', serif;
   text-align: center;
   max-width: 80vw;
-  padding: 40px;
+  padding: 30px;
   opacity: 0;
   transition: opacity 1s ease-in-out;
   position: absolute;
@@ -353,7 +353,7 @@ a-text {
 }
 
 .end-game-final-text p {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -366,7 +366,7 @@ a-text {
 }
 
 .end-game-final-text .small-text {
-  font-size: 24px;
+  font-size: 18px;
 }
 
 /* Guide Button */
@@ -377,9 +377,9 @@ a-text {
   background-color: #ffffff;
   color: #000000;
   border: none;
-  padding: 20px 30px;
-  border-radius: 12px;
-  font-size: 36px;
+  padding: 15px 22.5px;
+  border-radius: 9px;
+  font-size: 27px;
   font-family: 'Fondamento', serif;
   font-weight: bold;
   text-transform: uppercase;
@@ -447,7 +447,7 @@ a-text {
 
 .guide-text-container {
   max-width: 70vw;
-  padding: 40px;
+  padding: 30px;
   text-align: center;
   user-select: none;
   -webkit-user-select: none;
@@ -463,7 +463,7 @@ a-text {
 
 .guide-text {
   color: #ffffff;
-  font-size: 50px;
+  font-size: 37.5px;
   font-family: 'Fondamento', serif;
   line-height: 1.6;
   white-space: pre-wrap;
@@ -506,7 +506,7 @@ a-text {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  font-size: 160px;
+  font-size: 120px;
   font-family: 'Kalnia Glaze', serif;
   font-weight: bold;
   text-align: center;
@@ -533,11 +533,11 @@ a-text {
 
 .intro-story {
   color: #ffffff;
-  font-size: 35px;
+  font-size: 26.25px;
   font-family: 'Fondamento', serif;
   text-align: center;
   max-width: 80vw;
-  padding: 40px;
+  padding: 30px;
   opacity: 0;
   transition: opacity 1s ease-in-out;
   position: absolute;
@@ -569,7 +569,7 @@ a-text {
 }
 
 .intro-story p {
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -583,17 +583,17 @@ a-text {
 
 
 .intro-story p:last-of-type {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .qr-code {
   display: block;
-  margin: 30px auto 0;
-  width: 200px;
-  height: 200px;
+  margin: 22.5px auto 0;
+  width: 150px;
+  height: 150px;
   background-color: #ffffff;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 7.5px;
+  border-radius: 6px;
 }
 
 .start-button {
@@ -603,9 +603,9 @@ a-text {
   background-color: #ffffff;
   color: #000000;
   border: none;
-  padding: 15px 40px;
-  border-radius: 8px;
-  font-size: 24px;
+  padding: 11.25px 30px;
+  border-radius: 6px;
+  font-size: 18px;
   font-family: 'Fondamento', serif;
   font-weight: bold;
   cursor: pointer;
@@ -651,11 +651,11 @@ a-text {
 
 .controls-container {
   width: 75%;
-  max-width: 600px;
+  max-width: 450px;
   background-color: rgba(0, 0, 0, 0.7);
-  border: 2px solid #ffffff;
-  border-radius: 20px;
-  padding: 40px;
+  border: 1.5px solid #ffffff;
+  border-radius: 15px;
+  padding: 30px;
   position: relative;
   pointer-events: auto;
 }
@@ -664,13 +664,13 @@ a-text {
   position: absolute;
   top: 20px;
   right: 20px;
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   background-color: #ffffff;
   color: #000000;
   border: none;
   border-radius: 50%;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: bold;
   font-family: 'Fondamento', serif;
   cursor: pointer;
@@ -695,10 +695,10 @@ a-text {
 
 .controls-title {
   color: #ffffff;
-  font-size: 36px;
+  font-size: 27px;
   font-family: 'Fondamento', serif;
   font-weight: bold;
-  margin-bottom: 30px;
+  margin-bottom: 22.5px;
   text-align: center;
   user-select: none;
   -webkit-user-select: none;
@@ -713,12 +713,12 @@ a-text {
 
 .controls-list {
   color: #ffffff;
-  font-size: 24px;
+  font-size: 18px;
   font-family: 'Fondamento', serif;
   list-style-type: disc;
   list-style-position: inside;
   line-height: 2;
-  padding-left: 20px;
+  padding-left: 15px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -731,7 +731,7 @@ a-text {
 }
 
 .controls-list li {
-  margin-bottom: 15px;
+  margin-bottom: 11.25px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -760,9 +760,9 @@ a-text {
   left: 50%;
   transform: translate(-50%, -50%) translateZ(0);
   background-color: rgba(0, 0, 0, 0.8);
-  padding: 30px 50px;
-  border-radius: 12px;
-  border: 2px solid #ffffff;
+  padding: 22.5px 37.5px;
+  border-radius: 9px;
+  border: 1.5px solid #ffffff;
   z-index: 2147483647 !important;
   transition: opacity 0.3s ease;
   pointer-events: none;
@@ -779,7 +779,7 @@ a-text {
 
 .key-message-text {
   color: #ffffff;
-  font-size: 36px;
+  font-size: 27px;
   font-family: 'Fondamento', serif;
   white-space: nowrap;
   user-select: none;
